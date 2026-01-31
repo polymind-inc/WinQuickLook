@@ -8,12 +8,12 @@
   A lightweight file viewer like "Quick Look" on macOS.
 </p>
 <p align="center">
-  <a href="https://github.com/shibayan/WinQuickLook/actions/workflows/build.yml" rel="nofollow"><img src="https://github.com/shibayan/WinQuickLook/workflows/Build/badge.svg" alt="Build" style="max-width: 100%;"></a>
-  <a href="https://github.com/shibayan/WinQuickLook/actions/workflows/publish.yml" rel="nofollow"><img src="https://github.com/shibayan/WinQuickLook/workflows/Publish/badge.svg" alt="Build" style="max-width: 100%;"></a>
-  <a href="https://github.com/shibayan/WinQuickLook/stargazers" rel="nofollow"><img src="https://badgen.net/github/stars/shibayan/WinQuickLook" alt="Stargazers" style="max-width: 100%;"></a>
-  <a href="https://github.com/shibayan/WinQuickLook/network/members" rel="nofollow"><img src="https://badgen.net/github/forks/shibayan/WinQuickLook" alt="Forks" style="max-width: 100%;"></a>
-  <a href="https://www.microsoft.com/store/apps/9njmtkk6jc0q" rel="nofollow"><img src="https://badgen.net/github/release/shibayan/WinQuickLook" alt="Release" style="max-width: 100%;"></a>
-  <a href="https://github.com/shibayan/WinQuickLook/blob/master/LICENSE"><img src="https://badgen.net/github/license/shibayan/WinQuickLook" alt="License" style="max-width: 100%;"></a>
+  <a href="https://github.com/polymind-inc/WinQuickLook/actions/workflows/build.yml" rel="nofollow"><img src="https://github.com/polymind-inc/WinQuickLook/workflows/Build/badge.svg" alt="Build" style="max-width: 100%;"></a>
+  <a href="https://github.com/polymind-inc/WinQuickLook/actions/workflows/publish.yml" rel="nofollow"><img src="https://github.com/polymind-inc/WinQuickLook/workflows/Publish/badge.svg" alt="Build" style="max-width: 100%;"></a>
+  <a href="https://github.com/polymind-inc/WinQuickLook/stargazers" rel="nofollow"><img src="https://badgen.net/github/stars/polymind-inc/WinQuickLook" alt="Stargazers" style="max-width: 100%;"></a>
+  <a href="https://github.com/polymind-inc/WinQuickLook/network/members" rel="nofollow"><img src="https://badgen.net/github/forks/polymind-inc/WinQuickLook" alt="Forks" style="max-width: 100%;"></a>
+  <a href="https://www.microsoft.com/store/apps/9njmtkk6jc0q" rel="nofollow"><img src="https://badgen.net/github/release/polymind-inc/WinQuickLook" alt="Release" style="max-width: 100%;"></a>
+  <a href="https://github.com/polymind-inc/WinQuickLook/blob/master/LICENSE"><img src="https://badgen.net/github/license/polymind-inc/WinQuickLook" alt="License" style="max-width: 100%;"></a>
 </p>
 
 ## How to install
@@ -46,4 +46,4 @@ winget install WinQuickLook --source msstore
 
 ## License
 
-This project is licensed under the [Apache License 2.0](https://github.com/shibayan/WinQuickLook/blob/master/LICENSE)
+This project is licensed under the [Apache License 2.0](https://github.com/polymind-inc/WinQuickLook/blob/master/LICENSE)
