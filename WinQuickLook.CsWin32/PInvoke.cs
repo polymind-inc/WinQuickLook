@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 
 using Windows.Win32.Foundation;
 using Windows.Win32.Media.MediaFoundation;
-using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.Shell.Common;
 using Windows.Win32.UI.Shell.PropertiesSystem;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -34,7 +33,7 @@ public static partial class PInvoke
         return hr;
     }
 
-    public static unsafe HWND CreateWindowEx(WINDOW_EX_STYLE dwExStyle, string lpClassName, string lpWindowName, WINDOW_STYLE dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, SafeHandle? hMenu, SafeHandle? hInstance)
+    public static unsafe HWND CreateWindowEx2(WINDOW_EX_STYLE dwExStyle, string lpClassName, string lpWindowName, WINDOW_STYLE dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, SafeHandle? hMenu, SafeHandle? hInstance)
     {
         return CreateWindowEx(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, null);
     }
@@ -50,24 +49,11 @@ public static partial class PInvoke
         }
     }
 
-    public static unsafe uint GetWindowThreadProcessId(HWND hWnd) => GetWindowThreadProcessId(hWnd, null);
-
     public static unsafe HRESULT DwmSetWindowAttribute<T>(HWND hwnd, Graphics.Dwm.DWMWINDOWATTRIBUTE dwAttribute, ref T pvAttribute) where T : unmanaged
     {
         fixed (T* pvAttributeLocal = &pvAttribute)
         {
             return DwmSetWindowAttribute(hwnd, dwAttribute, pvAttributeLocal, (uint)Marshal.SizeOf<T>());
-        }
-    }
-
-    public static unsafe nuint SHGetFileInfo(string pszPath, Storage.FileSystem.FILE_FLAGS_AND_ATTRIBUTES dwFileAttributes, ref SHFILEINFOW psfi, SHGFI_FLAGS uFlags)
-    {
-        fixed (char* pszPathLocal = pszPath)
-        {
-            fixed (SHFILEINFOW* psfiLocal = &psfi)
-            {
-                return SHGetFileInfo(pszPathLocal, dwFileAttributes, psfiLocal, (uint)Marshal.SizeOf<SHFILEINFOW>(), uFlags);
-            }
         }
     }
 

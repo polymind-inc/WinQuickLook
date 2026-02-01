@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
+using Windows.Win32.Foundation;
+
 // ReSharper disable once CheckNamespace
 namespace Windows.Win32.UI.Shell.PropertiesSystem;
 

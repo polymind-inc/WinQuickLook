@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net9.0-windows10.0.26100": {
+    "net10.0-windows10.0.26100": {
       "Hardcodet.NotifyIcon.Wpf": {
         "type": "Direct",
         "requested": "[2.0.1, )",
@@ -10,11 +10,11 @@
       },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "Direct",
-        "requested": "[9.0.9, )",
-        "resolved": "9.0.9",
-        "contentHash": "zQV2WOSP+3z1EuK91ULxfGgo2Y75bTRnmJHp08+w/YXAyekZutX/qCd88/HOMNh35MDW9mJJJxPpMPS+1Rww8A==",
+        "requested": "[10.0.2, )",
+        "resolved": "10.0.2",
+        "contentHash": "J/Zmp6fY93JbaiZ11ckWvcyxMPjD6XVwIHQXBjryTBgn7O6O20HYg9uVLFcZlNfgH78MnreE/7EH+hjfzn7VyA==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.9"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.2"
         }
       },
       "AvalonEdit": {
@@ -29,26 +29,26 @@
       },
       "Markdig": {
         "type": "Transitive",
-        "resolved": "0.42.0",
-        "contentHash": "tINdftVfbTujqfPXrQOSl9/6XCS2Y4Zwz+i7UPBgxRNnDtI1CjyQ5UA/5sKoSOmfECyWkTztY/vbcc/u1DA8nA=="
+        "resolved": "0.44.0",
+        "contentHash": "X+CYMjcUnh/yO24wOSQxVFLiGqWrrtXJ5M7toHiM1Zk4Fg9UMLN5fkaq6FSOWH+mIprsHHgDMlq3MJhmrXalhg=="
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
-        "resolved": "9.0.9",
-        "contentHash": "/hymojfWbE9AlDOa0mczR44m00Jj+T3+HZO0ZnVTI032fVycI0ZbNOVFP6kqZMcXiLSYXzR2ilcwaRi6dzeGyA=="
+        "resolved": "10.0.2",
+        "contentHash": "zOIurr59+kUf9vNcsUkCvKWZv+fPosUZXURZesYkJCvl0EzTc9F7maAO4Cd2WEV7ZJJ0AZrFQvuH6Npph9wdBw=="
       },
       "Microsoft.Web.WebView2": {
         "type": "Transitive",
-        "resolved": "1.0.3537.50",
-        "contentHash": "6RQRMIcc/xnhDCdBmyc+YoPxPlYHjmg/mfVpQb4iYWr+K/cs28dTxCyOYFZjUFtiwupXN9nCqxOSMumn2ZKAIg=="
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
       },
       "winquicklook.core": {
         "type": "Project",
         "dependencies": {
           "AvalonEdit": "[6.3.1.120, )",
           "Cylinder.WPF": "[1.0.0-preview.2, )",
-          "Markdig": "[0.42.0, )",
-          "Microsoft.Web.WebView2": "[1.0.3537.50, )",
+          "Markdig": "[0.44.0, )",
+          "Microsoft.Web.WebView2": "[1.0.3719.77, )",
           "WinQuickLook.CsWin32": "[1.0.0, )"
         }
       },
@@ -56,18 +56,18 @@
         "type": "Project"
       }
     },
-    "net9.0-windows10.0.26100/win-arm64": {
+    "net10.0-windows10.0.26100/win-arm64": {
       "Microsoft.Web.WebView2": {
         "type": "Transitive",
-        "resolved": "1.0.3537.50",
-        "contentHash": "6RQRMIcc/xnhDCdBmyc+YoPxPlYHjmg/mfVpQb4iYWr+K/cs28dTxCyOYFZjUFtiwupXN9nCqxOSMumn2ZKAIg=="
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
       }
     },
-    "net9.0-windows10.0.26100/win-x64": {
+    "net10.0-windows10.0.26100/win-x64": {
       "Microsoft.Web.WebView2": {
         "type": "Transitive",
-        "resolved": "1.0.3537.50",
-        "contentHash": "6RQRMIcc/xnhDCdBmyc+YoPxPlYHjmg/mfVpQb4iYWr+K/cs28dTxCyOYFZjUFtiwupXN9nCqxOSMumn2ZKAIg=="
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
       }
     }
   }

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    "net9.0-windows10.0.26100": {
+    "net10.0-windows10.0.26100": {
       "AvalonEdit": {
         "type": "Direct",
         "requested": "[6.3.1.120, )",
@@ -16,15 +16,15 @@
       },
       "Markdig": {
         "type": "Direct",
-        "requested": "[0.42.0, )",
-        "resolved": "0.42.0",
-        "contentHash": "tINdftVfbTujqfPXrQOSl9/6XCS2Y4Zwz+i7UPBgxRNnDtI1CjyQ5UA/5sKoSOmfECyWkTztY/vbcc/u1DA8nA=="
+        "requested": "[0.44.0, )",
+        "resolved": "0.44.0",
+        "contentHash": "X+CYMjcUnh/yO24wOSQxVFLiGqWrrtXJ5M7toHiM1Zk4Fg9UMLN5fkaq6FSOWH+mIprsHHgDMlq3MJhmrXalhg=="
       },
       "Microsoft.Web.WebView2": {
         "type": "Direct",
-        "requested": "[1.0.3537.50, )",
-        "resolved": "1.0.3537.50",
-        "contentHash": "6RQRMIcc/xnhDCdBmyc+YoPxPlYHjmg/mfVpQb4iYWr+K/cs28dTxCyOYFZjUFtiwupXN9nCqxOSMumn2ZKAIg=="
+        "requested": "[1.0.3719.77, )",
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
       },
       "winquicklook.cswin32": {
         "type": "Project"

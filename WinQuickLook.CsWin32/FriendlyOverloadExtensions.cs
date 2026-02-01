@@ -72,12 +72,4 @@ public static class FriendlyOverloadExtensions
             return hr;
         }
     }
-
-    public static unsafe HRESULT Next(this IEnumAssocHandlers enumAssocHandlers, IAssocHandler[] rgelt, out uint pceltFetched)
-    {
-        fixed (uint* pceltFetchedLocal = &pceltFetched)
-        {
-            return enumAssocHandlers.Next(rgelt, pceltFetchedLocal);
-        }
-    }
 }

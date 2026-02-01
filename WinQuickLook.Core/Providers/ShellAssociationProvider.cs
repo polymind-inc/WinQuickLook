@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 
 using Windows.Win32;
 using Windows.Win32.UI.Shell;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 using WinQuickLook.Extensions;
 
@@ -180,11 +181,13 @@ public class ShellAssociationProvider
 
     private static BitmapSource? GetIconFromResource(string path, int iconIndex)
     {
-        PInvoke.ExtractIconEx(path, iconIndex, out var iconLarge, out var iconSmall, 1);
+        Span<HICON> iconSmall = new HICON[1];
+
+        PInvoke.ExtractIconEx(path, iconIndex, phiconSmall: iconSmall);
 
         try
         {
-            return Imaging.CreateBitmapSourceFromHIcon(iconSmall.DangerousGetHandle(), Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
+            return Imaging.CreateBitmapSourceFromHIcon(iconSmall[0], Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
                           .AsFreeze();
         }
         catch
@@ -193,8 +196,7 @@ public class ShellAssociationProvider
         }
         finally
         {
-            iconLarge.Close();
-            iconSmall.Close();
+            PInvoke.DestroyIcon(iconSmall[0]);
         }
     }
 

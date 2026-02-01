@@ -4,6 +4,11 @@
   "comInterop": {
     "preserveSigMethods": [ "*" ]
   },
+  "friendlyOverloads": {
+    "enabled": true,
+    "includePointerOverloads": false
+  },
+  "useSafeHandles": true,
   "public": true,
   "wideCharOnly": true
 }
