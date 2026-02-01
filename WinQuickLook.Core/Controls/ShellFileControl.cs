@@ -32,7 +32,7 @@ public class ShellFileControl : HwndHost
 
     protected override HandleRef BuildWindowCore(HandleRef hwndParent)
     {
-        var hwndHost = PInvoke.CreateWindowEx(0,
+        var hwndHost = PInvoke.CreateWindowEx2(0,
             "static", "",
             WINDOW_STYLE.WS_CHILD | WINDOW_STYLE.WS_VISIBLE | WINDOW_STYLE.WS_CLIPCHILDREN,
             0, 0,
