@@ -16,18 +16,21 @@ public static class FriendlyOverloadExtensions
         return hr;
     }
 
-    public static HRESULT GetFolder<T>(this IFolderView folderView, out T ppv)
+    extension(IFolderView folderView)
     {
-        var hr = folderView.GetFolder(typeof(T).GUID, out var o);
-        ppv = (T)o;
-        return hr;
-    }
-
-    public static unsafe void Item(this IFolderView folderView, int iItemIndex, out nint ppidl)
-    {
-        fixed (nint* ppidlLocal = &ppidl)
+        public HRESULT GetFolder<T>(out T ppv)
         {
-            folderView.Item(iItemIndex, (UI.Shell.Common.ITEMIDLIST**)ppidlLocal);
+            var hr = folderView.GetFolder(typeof(T).GUID, out var o);
+            ppv = (T)o;
+            return hr;
+        }
+
+        public unsafe void Item(int iItemIndex, out nint ppidl)
+        {
+            fixed (nint* ppidlLocal = &ppidl)
+            {
+                folderView.Item(iItemIndex, (UI.Shell.Common.ITEMIDLIST**)ppidlLocal);
+            }
         }
     }
 
@@ -55,21 +58,24 @@ public static class FriendlyOverloadExtensions
         }
     }
 
-    public static HRESULT Item<T>(this IShellWindows shellWindows, object index, out T folder)
+    extension(IShellWindows shellWindows)
     {
-        var hr = shellWindows.Item(index, out var o);
-        folder = (T)o;
-        return hr;
-    }
-
-    // ReSharper disable once InconsistentNaming
-    public static unsafe HRESULT FindWindowSW<T>(this IShellWindows shellWindows, in object pvarLoc, in object pvarLocRoot, int swClass, out HWND phwnd, int swfwOptions, out T ppdispOut)
-    {
-        fixed (HWND* phwndLocal = &phwnd)
+        public HRESULT Item<T>(object index, out T folder)
         {
-            var hr = shellWindows.FindWindowSW(pvarLoc, pvarLocRoot, swClass, (int*)phwndLocal, swfwOptions, out var o);
-            ppdispOut = (T)o;
+            var hr = shellWindows.Item(index, out var o);
+            folder = (T)o;
             return hr;
+        }
+
+        // ReSharper disable once InconsistentNaming
+        public unsafe HRESULT FindWindowSW<T>(in object pvarLoc, in object pvarLocRoot, int swClass, out HWND phwnd, int swfwOptions, out T ppdispOut)
+        {
+            fixed (HWND* phwndLocal = &phwnd)
+            {
+                var hr = shellWindows.FindWindowSW(pvarLoc, pvarLocRoot, swClass, (int*)phwndLocal, swfwOptions, out var o);
+                ppdispOut = (T)o;
+                return hr;
+            }
         }
     }
 }
