@@ -29,8 +29,8 @@
       },
       "Markdig": {
         "type": "Transitive",
-        "resolved": "0.45.0",
-        "contentHash": "ObNLcA1b+0lpNNoEg256g9faMeJZi35wZW0AnKJ4nGPJe+5qkwnV26kUvQTHuanFnSX9SdvPzOO41BVJ6XarAg=="
+        "resolved": "1.1.1",
+        "contentHash": "wACpji8aLjtmghzdancNFRDUH66F2kS8QE0uywUXvLHgfbTD7LPNj7Vx43sTckpEQFtn5YndEoZvGqIHosBzGQ=="
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Transitive",
@@ -47,7 +47,7 @@
         "dependencies": {
           "AvalonEdit": "[6.3.1.120, )",
           "Cylinder.WPF": "[1.0.0-preview.2, )",
-          "Markdig": "[0.45.0, )",
+          "Markdig": "[1.1.1, )",
           "Microsoft.Web.WebView2": "[1.0.3800.47, )",
           "WinQuickLook.CsWin32": "[1.0.0, )"
         }
