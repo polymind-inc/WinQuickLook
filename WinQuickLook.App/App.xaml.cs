@@ -14,12 +14,13 @@ namespace WinQuickLook.App;
 
 public partial class App
 {
-    public App(MainWindow mainWindow, LowLevelKeyboardHook keyboardHook, LowLevelMouseHook mouseHook)
+    public App(MainWindow mainWindow, LowLevelKeyboardHook keyboardHook, LowLevelMouseHook mouseHook, ShellExplorerProvider shellExplorerProvider)
     {
         InitializeComponent();
 
         _keyboardHook = keyboardHook;
         _mouseHook = mouseHook;
+        _shellExplorerProvider = shellExplorerProvider;
 
         _notifyIcon = (TaskbarIcon)FindResource("NotifyIcon")!;
         ((MenuItem)_notifyIcon.ContextMenu.Items[2]).Click += (_, _) => Application.Current.Shutdown();
@@ -31,6 +32,7 @@ public partial class App
 
     private readonly LowLevelKeyboardHook _keyboardHook;
     private readonly LowLevelMouseHook _mouseHook;
+    private readonly ShellExplorerProvider _shellExplorerProvider;
 
     private readonly TaskbarIcon _notifyIcon;
     private readonly MainWindow _mainWindow;
@@ -76,7 +78,7 @@ public partial class App
 
     private void PerformPreview()
     {
-        var fileSystemInfo = new ShellExplorerProvider().GetSelectedItem();
+        var fileSystemInfo = _shellExplorerProvider.GetSelectedItem();
 
         if (fileSystemInfo is not null)
         {

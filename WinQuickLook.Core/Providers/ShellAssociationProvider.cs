@@ -94,8 +94,6 @@ public class ShellAssociationProvider
                 }
             }
 
-            recommends.Sort((x, y) => Comparer<string>.Default.Compare(x.Name, y.Name));
-
             return recommends;
         }
         finally

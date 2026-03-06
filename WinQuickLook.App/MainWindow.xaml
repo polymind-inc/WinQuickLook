@@ -1,4 +1,4 @@
-﻿<Window x:Class="WinQuickLook.App.MainWindow"
+<Window x:Class="WinQuickLook.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -55,7 +55,7 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource Self}}"
                         Width="{x:Static app:AppParameters.CaptionButtonWidth}"
                         Height="{x:Static app:AppParameters.CaptionButtonHeight}"
-                        Visibility="{Binding Path=Recommends.Value, Converter={StaticResource ObjectToVisibilityConverter}}">
+                        Visibility="{Binding Path=FileInfo.Value, Converter={StaticResource ObjectToVisibilityConverter}}">
                     <TextBlock Style="{DynamicResource CaptionFontIconStyle}" Text="&#xE78B;" />
                 </Button>
                 <Button Style="{DynamicResource AssociateButtonStyle}"

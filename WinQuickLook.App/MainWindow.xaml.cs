@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,7 +28,7 @@ public partial class MainWindow
     {
         InitializeComponent();
 
-        _previewHandlers = previewHandlers;
+        _previewHandlers = previewHandlers.OrderByDescending(x => x.PriorityClass).ToArray();
         _shellAssociationProvider = shellAssociationProvider;
     }
 
@@ -38,7 +39,7 @@ public partial class MainWindow
 
     public Ref<ShellAssociationProvider.Entry> Default { get; } = new(null);
 
-    public Ref<IReadOnlyList<ShellAssociationProvider.Entry>> Recommends { get; } = new([]);
+    public Ref<IReadOnlyList<ShellAssociationProvider.Entry>?> Recommends { get; } = new(null);
 
     public void OpenPreview(FileSystemInfo fileSystemInfo)
     {
@@ -47,7 +48,9 @@ public partial class MainWindow
             return;
         }
 
-        ApplyRequestSize(handlerResult.RequestSize);
+        var monitorContext = GetCurrentMonitorInfo();
+
+        ApplyRequestSize(handlerResult.RequestSize, monitorContext.Monitor);
 
         Title = fileSystemInfo.Name;
         AppContentPresenter.Content = handlerResult.Content;
@@ -57,25 +60,31 @@ public partial class MainWindow
             FileInfo.Value = fileInfo;
 
             Default.Value = _shellAssociationProvider.TryGetDefault(fileInfo, out var entry) ? entry : null;
-            Recommends.Value = _shellAssociationProvider.GetRecommends(fileInfo);
         }
         else
         {
+            FileInfo.Value = null;
             Default.Value = null;
-            Recommends.Value = [];
         }
+
+        Recommends.Value = null;
 
         if (IsVisible)
         {
             return;
         }
 
-        MoveToCenter();
+        MoveToCenter(monitorContext);
         Show();
     }
 
     public void OpenAssociateMenu(Button button)
     {
+        if (FileInfo.Value is not null && Recommends.Value is null)
+        {
+            Recommends.Value = _shellAssociationProvider.GetRecommends(FileInfo.Value);
+        }
+
         var contextMenu = (ContextMenu)button.FindResource("AssociateMenu");
 
         contextMenu.PlacementTarget = button;
@@ -116,10 +125,8 @@ public partial class MainWindow
         }
     }
 
-    private void ApplyRequestSize(Size requestSize)
+    private void ApplyRequestSize(Size requestSize, Rect monitor)
     {
-        var (monitor, _) = GetCurrentMonitorInfo();
-
         var minWidthOrHeight = Math.Min(monitor.Width, monitor.Height) * 0.8;
         var scaleFactor = Math.Min(minWidthOrHeight / Math.Max(requestSize.Width, requestSize.Height), 1.0);
 
@@ -127,21 +134,19 @@ public partial class MainWindow
         Height = Math.Max(Math.Round(requestSize.Height * scaleFactor) + AppParameters.CaptionHeight, MinHeight);
     }
 
-    private void MoveToCenter()
+    private void MoveToCenter(MonitorContext monitorContext)
     {
-        var (monitor, dpi) = GetCurrentMonitorInfo();
+        var dpiFactor = monitorContext.Dpi / 96.0;
 
-        var dpiFactor = dpi / 96.0;
-
-        var x = monitor.X + ((monitor.Width - (Width * dpiFactor)) / 2);
-        var y = monitor.Y + ((monitor.Height - (Height * dpiFactor)) / 2);
+        var x = monitorContext.Monitor.X + ((monitorContext.Monitor.Width - (Width * dpiFactor)) / 2);
+        var y = monitorContext.Monitor.Y + ((monitorContext.Monitor.Height - (Height * dpiFactor)) / 2);
 
         var hwnd = new WindowInteropHelper(this).Handle;
 
         PInvoke.SetWindowPos(new HWND(hwnd), new HWND(), (int)Math.Round(x), (int)Math.Round(y), 0, 0, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
     }
 
-    private static (Rect, double) GetCurrentMonitorInfo()
+    private static MonitorContext GetCurrentMonitorInfo()
     {
         var foregroundHwnd = PInvoke.GetForegroundWindow();
 
@@ -158,6 +163,8 @@ public partial class MainWindow
         var leftTop = new Point(monitorInfo.rcMonitor.left, monitorInfo.rcMonitor.top);
         var rightBottom = new Point(monitorInfo.rcMonitor.right, monitorInfo.rcMonitor.bottom);
 
-        return (new Rect(leftTop, rightBottom), dpiX);
+        return new MonitorContext(new Rect(leftTop, rightBottom), dpiX);
     }
+
+    private readonly record struct MonitorContext(Rect Monitor, double Dpi);
 }
