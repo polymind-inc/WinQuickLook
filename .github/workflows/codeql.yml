@@ -11,7 +11,7 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: ${{ matrix.os }}
     permissions:
       security-events: write
       packages: read
@@ -23,8 +23,10 @@ jobs:
         include:
         - language: actions
           build-mode: none
+          os: ubuntu-latest
         - language: csharp
           build-mode: autobuild
+          os: windows-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
