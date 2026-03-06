@@ -48,14 +48,23 @@ public class ShellExplorerProvider
             {
                 shellWindows.Item(i, out IWebBrowserApp webBrowserApp);
 
-                webBrowserApp.get_HWND(out var hwnd);
-
-                if (hwnd == foregroundHwnd && !IsCaretActive(hwnd))
+                try
                 {
-                    fileSystemInfo = GetSelectedItemCore(webBrowserApp);
-                }
+                    webBrowserApp.get_HWND(out var hwnd);
 
-                Marshal.ReleaseComObject(webBrowserApp);
+                    if (hwnd != foregroundHwnd || IsCaretActive(hwnd))
+                    {
+                        continue;
+                    }
+
+                    fileSystemInfo = GetSelectedItemCore(webBrowserApp);
+
+                    break;
+                }
+                finally
+                {
+                    Marshal.ReleaseComObject(webBrowserApp);
+                }
             }
         }
 
