@@ -39,7 +39,7 @@ public partial class MainWindow
 
     public Ref<ShellAssociationProvider.Entry> Default { get; } = new(null);
 
-    public Ref<IReadOnlyList<ShellAssociationProvider.Entry>> Recommends { get; } = new([]);
+    public Ref<IReadOnlyList<ShellAssociationProvider.Entry>?> Recommends { get; } = new(null);
 
     public void OpenPreview(FileSystemInfo fileSystemInfo)
     {
@@ -67,7 +67,7 @@ public partial class MainWindow
             Default.Value = null;
         }
 
-        Recommends.Value = [];
+        Recommends.Value = null;
 
         if (IsVisible)
         {
@@ -80,7 +80,7 @@ public partial class MainWindow
 
     public void OpenAssociateMenu(Button button)
     {
-        if (FileInfo.Value is not null && Recommends.Value?.Count == 0)
+        if (FileInfo.Value is not null && Recommends.Value is null)
         {
             Recommends.Value = _shellAssociationProvider.GetRecommends(FileInfo.Value);
         }
