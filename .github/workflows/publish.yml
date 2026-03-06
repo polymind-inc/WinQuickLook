@@ -4,6 +4,9 @@ on:
   push:
     tags: [ v* ]
 
+permissions:
+  contents: read
+
 env:
   DOTNET_VERSION: 10.0.x
   BUNDLE_PLATFORMS: x64|arm64
