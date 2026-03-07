@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WinQuickLook — Quick Look for Windows</title>
+  <meta name="description" content="Preview files instantly with a single keystroke. WinQuickLook brings macOS Quick Look to Windows — fast, lightweight, and seamless.">
+  <meta name="keywords" content="WinQuickLook, Quick Look, Windows, file preview, space bar preview, macOS Quick Look for Windows">
+  <meta name="author" content="polymind-inc">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="WinQuickLook — Quick Look for Windows">
+  <meta property="og:description" content="Preview files instantly with a single keystroke. Bring macOS Quick Look to Windows.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://winquicklook.app">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WinQuickLook — Quick Look for Windows">
+  <meta name="twitter:description" content="Preview files instantly with a single keystroke. Bring macOS Quick Look to Windows.">
+
+  <link rel="canonical" href="https://winquicklook.app">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <img src="icon.png" alt="WinQuickLook icon" width="32" height="32">
+        <span>WinQuickLook</span>
+      </a>
+      <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#installation">Install</a>
+        <a href="https://github.com/polymind-inc/WinQuickLook" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-icon">
+        <img src="icon.png" alt="WinQuickLook" width="80" height="80">
+      </div>
+      <h1><span class="highlight">Quick Look</span> for Windows</h1>
+      <p class="hero-subtitle">
+        Preview files instantly with a single keystroke&mdash;no need to open applications.
+        <br>Bring the beloved macOS Quick Look experience to your PC.
+      </p>
+      <div class="hero-actions">
+        <a href="https://www.microsoft.com/store/apps/9njmtkk6jc0q" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Get it from Microsoft Store
+        </a>
+        <a href="https://github.com/polymind-inc/WinQuickLook" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-demo">
+        <div class="demo-window">
+          <div class="demo-titlebar">
+            <span class="demo-dot"></span>
+            <span class="demo-dot"></span>
+            <span class="demo-dot"></span>
+          </div>
+          <div class="demo-content">
+            <div class="demo-instruction">
+              <kbd>Space</kbd>
+              <span>to preview</span>
+              <kbd>Esc</kbd>
+              <span>to close</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features">
+    <div class="container">
+      <h2 class="section-title">Why WinQuickLook?</h2>
+      <p class="section-subtitle">A fast, lightweight file previewer that just works.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h3>Lightning Fast</h3>
+          <p>Instant file previews without waiting for heavy applications to launch. Just press Space and see your file immediately.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <h3>Wide Format Support</h3>
+          <p>Preview images, documents, videos, audio files, Markdown, HTML, and many more formats out of the box.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v16"/><path d="M2 8h8"/><path d="M2 12h8"/><path d="M2 16h8"/></svg>
+          </div>
+          <h3>Simple Keyboard Shortcut</h3>
+          <p>Press <kbd>Space</kbd> to preview, <kbd>Esc</kbd> to close. That's all you need to remember.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+          </div>
+          <h3>Lightweight</h3>
+          <p>Minimal resource usage. WinQuickLook runs quietly in the background, ready whenever you need it.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <h3>Modern UI</h3>
+          <p>Clean, intuitive interface that fits seamlessly with the Windows look and feel.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1115.71 8h1.79a4.5 4.5 0 012.5 8.242"/><path d="M12 12v9"/><path d="M8 17l4 4 4-4"/></svg>
+          </div>
+          <h3>Seamless Integration</h3>
+          <p>Works directly with Windows File Explorer. No configuration needed&mdash;install and start previewing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">Get started in seconds.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Install</h3>
+          <p>Download from the Microsoft Store or install via WinGet.</p>
+        </div>
+        <div class="step-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Select a File</h3>
+          <p>Browse to any file in Windows File Explorer and click on it.</p>
+        </div>
+        <div class="step-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Press Space</h3>
+          <p>Instantly preview the file. Press Esc to close when you're done.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section id="installation" class="installation">
+    <div class="container">
+      <h2 class="section-title">Installation</h2>
+      <p class="section-subtitle">Choose the method that works best for you.</p>
+      <div class="install-grid">
+        <div class="install-card install-card-primary">
+          <div class="install-badge">Recommended</div>
+          <h3>Microsoft Store</h3>
+          <p>Get automatic updates and a seamless installation experience.</p>
+          <a href="https://www.microsoft.com/store/apps/9njmtkk6jc0q" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+            Get it from Microsoft Store
+          </a>
+        </div>
+        <div class="install-card">
+          <h3>WinGet</h3>
+          <p>Install via the command line using Windows Package Manager.</p>
+          <div class="code-block">
+            <code>winget install WinQuickLook --source msstore</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Requirements -->
+  <section class="requirements">
+    <div class="container">
+      <h2 class="section-title">System Requirements</h2>
+      <div class="requirements-list">
+        <div class="requirement">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Windows 10 Version 1903 or later</span>
+        </div>
+        <div class="requirement">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Windows 11</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Open Source -->
+  <section class="open-source">
+    <div class="container open-source-inner">
+      <h2>Open Source</h2>
+      <p>WinQuickLook is open source and licensed under the Apache License 2.0. Contributions, bug reports, and feature requests are always welcome.</p>
+      <a href="https://github.com/polymind-inc/WinQuickLook" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="icon.png" alt="WinQuickLook icon" width="24" height="24">
+        <span>WinQuickLook</span>
+      </div>
+      <p class="footer-copy">&copy; polymind-inc. Licensed under <a href="https://github.com/polymind-inc/WinQuickLook/blob/master/LICENSE" target="_blank" rel="noopener noreferrer">Apache License 2.0</a>.</p>
+    </div>
+  </footer>
+</body>
+</html>
