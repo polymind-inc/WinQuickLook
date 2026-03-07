@@ -3,8 +3,15 @@ name: "CodeQL Advanced"
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - "src/**"
+      - ".github/workflows/**"
   pull_request:
+    types: [ opened, reopened, synchronize, ready_for_review ]
     branches: [ "master" ]
+    paths:
+      - "src/**"
+      - ".github/workflows/**"
   schedule:
     - cron: '15 22 * * 2'
 
@@ -14,6 +21,7 @@ env:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ${{ matrix.os }}
     permissions:
       security-events: write
