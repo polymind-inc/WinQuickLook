@@ -27,10 +27,10 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
     - name: Build solutions
-      run: dotnet build .\WinQuickLook.slnx -c Release -p:Platform=x64
+      run: dotnet build .\src\WinQuickLook.slnx -c Release -p:Platform=x64
 
     - name: Run test cases
-      run: dotnet test .\WinQuickLook.slnx -c Release -p:Platform=x64 --no-build
+      run: dotnet test .\src\WinQuickLook.slnx -c Release -p:Platform=x64 --no-build
 
     - name: Lint C# code
-      run: dotnet format .\WinQuickLook.slnx --verify-no-changes --verbosity detailed --no-restore
+      run: dotnet format .\src\WinQuickLook.slnx --verify-no-changes --verbosity detailed --no-restore

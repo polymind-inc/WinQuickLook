@@ -35,7 +35,7 @@ jobs:
     - name: Update package manifest
       run: |
         [Reflection.Assembly]::LoadWithPartialName("System.Xml.Linq")
-        $path = "WinQuickLook.Package/package.appxmanifest"
+        $path = "src\WinQuickLook.Package\package.appxmanifest"
         $doc = [System.Xml.Linq.XDocument]::Load($path)
         $xName = [System.Xml.Linq.XName]"{http://schemas.microsoft.com/appx/manifest/foundation/windows10}Identity"
         $doc.Root.Element($xName).Attribute("Version").Value = "${{ steps.setup_version.outputs.VERSION }}.0";
@@ -43,7 +43,7 @@ jobs:
 
     - name: Build application
       run: >
-        msbuild .\WinQuickLook.slnx
+        msbuild .\src\WinQuickLook.slnx
         /Restore
         /p:Configuration=Release
         /p:Version="${{ steps.setup_version.outputs.VERSION }}"
