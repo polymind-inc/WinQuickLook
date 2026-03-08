@@ -43,7 +43,9 @@ Perfect for quickly browsing through documents, images, videos, and more without
 
 Get the app directly from the Microsoft Store for automatic updates:
 
-<a href="https://www.microsoft.com/store/apps/9njmtkk6jc0q?cid=storebadge&ocid=badge"><img src="https://developer.microsoft.com/en-us/store/badges/images/English_get-it-from-MS.png" alt="Download now" width="284"/></a>
+<a href="https://get.microsoft.com/installer/download/9njmtkk6jc0q?referrer=appbadge" target="_self" >
+	<img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200"/>
+</a>
 
 ### Option 2: WinGet
 
