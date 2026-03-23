@@ -14,7 +14,7 @@ public class SizeExtensionsTests
     [InlineData(2000, 3000, 800, 1200)]
     [InlineData(1280, 1024, 1200, 960)]
     [InlineData(1024, 1280, 960, 1200)]
-    public void FitTo(int width, int height, int fitWidth, int fitHeight)
+    public void FitTo_SizeExceedsLimit_ReturnsScaledSize(int width, int height, int fitWidth, int fitHeight)
     {
         var size = new Size(width, height);
 
