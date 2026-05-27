@@ -55,11 +55,15 @@ public partial class App
     private void ConfigureNotifyIcon()
     {
         _messageWindow = new Window();
+
+        var hwnd = WindowNative.GetWindowHandle(_messageWindow);
+
+        WindowComposition.SetCloaked(hwnd, true);
         _messageWindow.Activate();
-        NativeNotifyIcon.HideWindow(WindowNative.GetWindowHandle(_messageWindow));
+        NativeNotifyIcon.HideWindow(hwnd);
 
         _notifyIcon = new NativeNotifyIcon(
-            WindowNative.GetWindowHandle(_messageWindow),
+            hwnd,
             AppParameters.Title,
             () => _dispatcherQueue.TryEnqueue(PerformPreview),
             () => _dispatcherQueue.TryEnqueue(ExitApplication));

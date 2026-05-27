@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,22 +21,23 @@ using Windows.System;
 
 using WinQuickLook.Preview;
 
+using WinRT.Interop;
+
 namespace WinQuickLook.App.WinUI;
 
 public sealed partial class PreviewWindow
 {
-    private static readonly TimeSpan OpenAnimationDuration = TimeSpan.FromMilliseconds(180);
-    private static readonly TimeSpan CrossfadeDuration = TimeSpan.FromMilliseconds(150);
-    private static readonly TimeSpan WindowResizeDuration = TimeSpan.FromMilliseconds(180);
-    private static readonly TimeSpan WindowAnimationFrameDelay = TimeSpan.FromMilliseconds(16);
+    private static readonly TimeSpan CrossfadeDuration = TimeSpan.FromMilliseconds(140);
     private static readonly SizeInt32 FallbackWindowSize = new(760, 520);
 
     private readonly IPreviewProvider _previewProvider;
     private readonly IReadOnlyList<string> _filePaths;
+    private readonly nint _hwnd;
 
     private int _currentIndex;
     private bool _isPrimaryContentActive = true;
     private bool _isSwitching;
+    private bool _revealed;
 
     public PreviewWindow(IPreviewProvider previewProvider, PreviewRequest request)
     {
@@ -47,7 +47,12 @@ public sealed partial class PreviewWindow
         _filePaths = NormalizeFilePaths(request);
         _currentIndex = Math.Clamp(request.CurrentIndex, 0, Math.Max(_filePaths.Count - 1, 0));
 
+        _hwnd = WindowNative.GetWindowHandle(this);
+        WindowComposition.SetCloaked(_hwnd, true);
+        WindowComposition.EnableRoundedCorners(_hwnd);
+
         ConfigureWindow();
+        ConfigureNavigationChrome();
 
         Root.Loaded += Root_Loaded;
     }
@@ -57,7 +62,25 @@ public sealed partial class PreviewWindow
         Root.Focus(FocusState.Programmatic);
 
         await ShowCurrentAsync(false);
-        await PlayOpenAnimationAsync();
+        await RevealWindowAsync();
+    }
+
+    private async Task RevealWindowAsync()
+    {
+        if (_revealed)
+        {
+            return;
+        }
+
+        _revealed = true;
+
+        // Yield once so the layout pass that follows MoveAndResize has been
+        // composited by DWM before we uncloak — otherwise the first visible
+        // frame can show the previous (fallback) size with Mica not yet
+        // recomputed for the new bounds.
+        await Task.Yield();
+
+        WindowComposition.SetCloaked(_hwnd, false);
     }
 
     private void ConfigureWindow()
@@ -69,7 +92,6 @@ public sealed partial class PreviewWindow
 
         AppWindow.Title = Title;
         AppWindow.IsShownInSwitchers = false;
-        AppWindow.Resize(FallbackWindowSize);
 
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
@@ -80,6 +102,30 @@ public sealed partial class PreviewWindow
         }
 
         AppWindow.MoveAndResize(GetCenteredBounds(FallbackWindowSize));
+    }
+
+    private void ConfigureNavigationChrome()
+    {
+        var hasSiblings = _filePaths.Count > 1;
+        var visibility = hasSiblings ? Visibility.Visible : Visibility.Collapsed;
+
+        CounterPill.Visibility = visibility;
+        PrevButton.Visibility = visibility;
+        NextButton.Visibility = visibility;
+        HeaderSeparator.Visibility = visibility;
+
+        UpdateNavigationState();
+    }
+
+    private void UpdateNavigationState()
+    {
+        if (_filePaths.Count <= 1)
+        {
+            return;
+        }
+
+        PrevButton.IsEnabled = _currentIndex > 0;
+        NextButton.IsEnabled = _currentIndex < _filePaths.Count - 1;
     }
 
     private async Task ShowCurrentAsync(bool crossfade)
@@ -104,31 +150,64 @@ public sealed partial class PreviewWindow
         {
             var renderedPreview = await CreateRenderedPreviewAsync(result);
 
-            UpdateTitle(result, result.FilePath);
+            UpdateHeader(result, result.FilePath);
 
-            if (crossfade)
+            var sizeChanging = IsBoundsChanging(renderedPreview.WindowBounds);
+
+            if (crossfade && !sizeChanging)
             {
-                await Task.WhenAll(
-                    AnimateWindowBoundsAsync(renderedPreview.WindowBounds, WindowResizeDuration),
-                    CrossfadeToAsync(renderedPreview.Content));
+                // Same size — content crossfade looks clean.
+                await CrossfadeToAsync(renderedPreview.Content);
+            }
+            else if (crossfade)
+            {
+                // Resize is visible; cloak the window across the resize +
+                // content swap so the user never sees a half-laid-out frame
+                // or a Mica recompute flash.
+                WindowComposition.SetCloaked(_hwnd, true);
+                try
+                {
+                    SwapContent(renderedPreview.Content);
+                    AppWindow.MoveAndResize(renderedPreview.WindowBounds);
+                    await Task.Yield();
+                }
+                finally
+                {
+                    WindowComposition.SetCloaked(_hwnd, false);
+                }
             }
             else
             {
-                PrimaryContent.Content = renderedPreview.Content;
-                PrimaryContent.Opacity = 1;
-                PrimaryContent.Visibility = Visibility.Visible;
-                SecondaryContent.Content = null;
-                SecondaryContent.Opacity = 0;
-                SecondaryContent.Visibility = Visibility.Collapsed;
-                _isPrimaryContentActive = true;
-
-                await AnimateWindowBoundsAsync(renderedPreview.WindowBounds, WindowResizeDuration);
+                SwapContent(renderedPreview.Content);
+                AppWindow.MoveAndResize(renderedPreview.WindowBounds);
             }
         }
         catch (Exception ex) when (ex is FileNotFoundException or UnauthorizedAccessException or IOException or ArgumentException)
         {
-            ShowUnsupported("The image could not be opened.");
+            ShowUnsupported("The file could not be opened.");
         }
+    }
+
+    private bool IsBoundsChanging(RectInt32 target)
+    {
+        var position = AppWindow.Position;
+        var size = AppWindow.Size;
+
+        return position.X != target.X
+            || position.Y != target.Y
+            || size.Width != target.Width
+            || size.Height != target.Height;
+    }
+
+    private void SwapContent(UIElement content)
+    {
+        PrimaryContent.Content = content;
+        PrimaryContent.Opacity = 1;
+        PrimaryContent.Visibility = Visibility.Visible;
+        SecondaryContent.Content = null;
+        SecondaryContent.Opacity = 0;
+        SecondaryContent.Visibility = Visibility.Collapsed;
+        _isPrimaryContentActive = true;
     }
 
     private async Task<RenderedPreview> CreateRenderedPreviewAsync(PreviewResult result)
@@ -194,9 +273,12 @@ public sealed partial class PreviewWindow
     {
         AppWindow.MoveAndResize(GetCenteredBounds(FallbackWindowSize));
 
-        TitleText.Text = "Unsupported preview";
-        PathText.Text = _filePaths.Count == 0 ? string.Empty : _filePaths[_currentIndex];
-        CounterText.Text = string.Empty;
+        var fallbackPath = _filePaths.Count == 0 ? string.Empty : _filePaths[_currentIndex];
+
+        TitleText.Text = string.IsNullOrEmpty(fallbackPath) ? "Unsupported preview" : Path.GetFileName(fallbackPath);
+        SubtitleText.Text = string.IsNullOrEmpty(fallbackPath)
+            ? string.Empty
+            : (Path.GetDirectoryName(fallbackPath) ?? string.Empty);
         PrimaryContent.Content = CreateUnsupportedView(message);
         PrimaryContent.Opacity = 1;
         PrimaryContent.Visibility = Visibility.Visible;
@@ -206,15 +288,28 @@ public sealed partial class PreviewWindow
         _isPrimaryContentActive = true;
     }
 
-    private void UpdateTitle(PreviewResult result, string filePath)
+    private void UpdateHeader(PreviewResult result, string filePath)
     {
         var title = result.Title ?? Path.GetFileName(filePath);
 
         Title = title;
         AppWindow.Title = title;
         TitleText.Text = title;
-        PathText.Text = filePath;
-        CounterText.Text = _filePaths.Count > 1 ? $"{_currentIndex + 1} / {_filePaths.Count}" : string.Empty;
+        SubtitleText.Text = BuildSubtitle(filePath);
+
+        if (_filePaths.Count > 1)
+        {
+            CounterText.Text = $"{_currentIndex + 1} / {_filePaths.Count}";
+        }
+
+        UpdateNavigationState();
+    }
+
+    private static string BuildSubtitle(string filePath)
+    {
+        var directory = Path.GetDirectoryName(filePath);
+
+        return string.IsNullOrEmpty(directory) ? filePath : directory;
     }
 
     private async void Root_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -235,6 +330,16 @@ public sealed partial class PreviewWindow
                 await NavigateAsync(1);
                 break;
         }
+    }
+
+    private async void PrevButton_Click(object sender, RoutedEventArgs e)
+    {
+        await NavigateAsync(-1);
+    }
+
+    private async void NextButton_Click(object sender, RoutedEventArgs e)
+    {
+        await NavigateAsync(1);
     }
 
     private async Task NavigateAsync(int offset)
@@ -269,25 +374,13 @@ public sealed partial class PreviewWindow
         Close();
     }
 
-    private async Task PlayOpenAnimationAsync()
-    {
-        await Task.WhenAll(
-            AnimateOpacityAsync(PreviewSurface, 1, OpenAnimationDuration),
-            AnimateScaleAsync(1, OpenAnimationDuration));
-    }
-
     private static Task AnimateOpacityAsync(UIElement target, double to)
-    {
-        return AnimateOpacityAsync(target, to, CrossfadeDuration);
-    }
-
-    private static Task AnimateOpacityAsync(UIElement target, double to, TimeSpan duration)
     {
         var storyboard = new Storyboard();
         var animation = new DoubleAnimation
         {
             To = to,
-            Duration = duration,
+            Duration = CrossfadeDuration,
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
         };
 
@@ -295,32 +388,6 @@ public sealed partial class PreviewWindow
         Storyboard.SetTargetProperty(animation, nameof(UIElement.Opacity));
         storyboard.Children.Add(animation);
 
-        return BeginStoryboardAsync(storyboard);
-    }
-
-    private Task AnimateScaleAsync(double to, TimeSpan duration)
-    {
-        var storyboard = new Storyboard();
-
-        foreach (var propertyName in new[] { nameof(ScaleTransform.ScaleX), nameof(ScaleTransform.ScaleY) })
-        {
-            var animation = new DoubleAnimation
-            {
-                To = to,
-                Duration = duration,
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-
-            Storyboard.SetTarget(animation, PreviewSurfaceScale);
-            Storyboard.SetTargetProperty(animation, propertyName);
-            storyboard.Children.Add(animation);
-        }
-
-        return BeginStoryboardAsync(storyboard);
-    }
-
-    private static Task BeginStoryboardAsync(Storyboard storyboard)
-    {
         var completion = new TaskCompletionSource();
 
         storyboard.Completed += (_, _) => completion.TrySetResult();
@@ -336,7 +403,8 @@ public sealed partial class PreviewWindow
             Source = image,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Stretch = Stretch.Uniform
+            Stretch = Stretch.Uniform,
+            Margin = new Thickness(8)
         };
     }
 
@@ -359,16 +427,16 @@ public sealed partial class PreviewWindow
         {
             Text = string.Join(Environment.NewLine, Enumerable.Range(1, lineCount)),
             FontFamily = fontFamily,
-            FontSize = 13,
+            FontSize = 12.5,
             IsHitTestVisible = false,
-            Opacity = 0.42,
+            Opacity = 0.4,
             TextAlignment = TextAlignment.Right
         };
         var textBlock = new TextBlock
         {
             Text = text,
             FontFamily = fontFamily,
-            FontSize = 13,
+            FontSize = 12.5,
             IsTextSelectionEnabled = true,
             TextWrapping = TextWrapping.NoWrap
         };
@@ -381,7 +449,7 @@ public sealed partial class PreviewWindow
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            Padding = new Thickness(10),
+            Padding = new Thickness(16, 14, 16, 14),
             Content = grid
         };
     }
@@ -392,22 +460,24 @@ public sealed partial class PreviewWindow
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Spacing = 8
+            Spacing = 10
         };
 
         stackPanel.Children.Add(new FontIcon
         {
-            FontFamily = new FontFamily("Segoe MDL2 Assets"),
-            FontSize = 32,
-            Glyph = "\uE8A5",
-            Opacity = 0.7
+            FontFamily = new FontFamily("Segoe Fluent Icons"),
+            FontSize = 36,
+            Glyph = "\uE7BA",
+            Opacity = 0.55
         });
         stackPanel.Children.Add(new TextBlock
         {
             Text = message,
-            FontSize = 14,
-            Opacity = 0.82,
-            TextAlignment = TextAlignment.Center
+            FontSize = 13,
+            Opacity = 0.78,
+            TextAlignment = TextAlignment.Center,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 360
         });
 
         return stackPanel;
@@ -448,17 +518,20 @@ public sealed partial class PreviewWindow
 
         if (payload.HasVideo)
         {
+            mediaPlayerElement.Margin = new Thickness(0);
+
             return mediaPlayerElement;
         }
 
         var file = await StorageFile.GetFileFromPathAsync(payload.FilePath);
         var properties = await file.Properties.GetMusicPropertiesAsync();
-        var title = string.IsNullOrWhiteSpace(properties.Title) ? Path.GetFileName(payload.FilePath) : properties.Title;
+        var title = string.IsNullOrWhiteSpace(properties.Title) ? Path.GetFileNameWithoutExtension(payload.FilePath) : properties.Title;
         var artist = string.IsNullOrWhiteSpace(properties.Artist) ? "Unknown artist" : properties.Artist;
         var album = string.IsNullOrWhiteSpace(properties.Album) ? string.Empty : properties.Album;
         var grid = new Grid
         {
-            Padding = new Thickness(28)
+            Padding = new Thickness(32, 28, 32, 24),
+            RowSpacing = 18
         };
 
         grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
@@ -468,31 +541,44 @@ public sealed partial class PreviewWindow
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Spacing = 10
+            Spacing = 8
         };
 
-        stackPanel.Children.Add(new FontIcon
+        var artworkContainer = new Border
         {
-            FontFamily = new FontFamily("Segoe MDL2 Assets"),
-            FontSize = 54,
+            Width = 132,
+            Height = 132,
+            CornerRadius = new CornerRadius(16),
+            Background = Application.Current.Resources["SubtleFillColorSecondaryBrush"] as Brush,
+            Margin = new Thickness(0, 0, 0, 8)
+        };
+
+        artworkContainer.Child = new FontIcon
+        {
+            FontFamily = new FontFamily("Segoe Fluent Icons"),
+            FontSize = 56,
             Glyph = "\uE8D6",
             Opacity = 0.72
-        });
+        };
+
+        stackPanel.Children.Add(artworkContainer);
         stackPanel.Children.Add(new TextBlock
         {
             Text = title,
-            FontSize = 24,
+            FontSize = 20,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 360
         });
         stackPanel.Children.Add(new TextBlock
         {
             Text = string.IsNullOrWhiteSpace(album) ? artist : $"{artist} · {album}",
-            FontSize = 14,
-            Opacity = 0.72,
+            FontSize = 13,
+            Opacity = 0.7,
             TextAlignment = TextAlignment.Center,
-            TextWrapping = TextWrapping.Wrap
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 360
         });
 
         Grid.SetRow(mediaPlayerElement, 1);
@@ -506,55 +592,83 @@ public sealed partial class PreviewWindow
     {
         var grid = new Grid
         {
-            Padding = new Thickness(28),
-            ColumnSpacing = 24
+            Padding = new Thickness(32, 28, 32, 28),
+            ColumnSpacing = 28
         };
 
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.42, GridUnitType.Star) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0.58, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        var icon = new FontIcon
+        var iconContainer = new Border
         {
-            FontFamily = new FontFamily("Segoe MDL2 Assets"),
-            FontSize = 96,
+            Width = 132,
+            Height = 132,
+            CornerRadius = new CornerRadius(18),
+            Background = Application.Current.Resources["SubtleFillColorSecondaryBrush"] as Brush,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        iconContainer.Child = new FontIcon
+        {
+            FontFamily = new FontFamily("Segoe Fluent Icons"),
+            FontSize = 64,
             Glyph = payload.IsDirectory ? "\uE8B7" : "\uE7C3",
-            Opacity = 0.72,
+            Opacity = 0.78,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
+
         var stackPanel = new StackPanel
         {
             VerticalAlignment = VerticalAlignment.Center,
-            Spacing = 12
+            Spacing = 10
         };
 
         stackPanel.Children.Add(new TextBlock
         {
             Text = Path.GetFileName(payload.Path),
-            FontSize = 24,
+            FontSize = 20,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             TextWrapping = TextWrapping.Wrap
         });
-        stackPanel.Children.Add(CreateMetadataText(payload.TypeName));
-        stackPanel.Children.Add(CreateMetadataText(payload.Detail));
-        stackPanel.Children.Add(CreateMetadataText(payload.LastWriteTime.ToString("G")));
+        stackPanel.Children.Add(CreateMetadataRow("\uE7C3", payload.TypeName));
+        stackPanel.Children.Add(CreateMetadataRow("\uE9CE", payload.Detail));
+        stackPanel.Children.Add(CreateMetadataRow("\uE787", payload.LastWriteTime.ToString("G")));
 
         Grid.SetColumn(stackPanel, 1);
-        grid.Children.Add(icon);
+        grid.Children.Add(iconContainer);
         grid.Children.Add(stackPanel);
 
         return grid;
     }
 
-    private static TextBlock CreateMetadataText(string text)
+    private static UIElement CreateMetadataRow(string glyph, string text)
     {
-        return new TextBlock
+        var stackPanel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 10
+        };
+
+        stackPanel.Children.Add(new FontIcon
+        {
+            FontFamily = new FontFamily("Segoe Fluent Icons"),
+            FontSize = 12,
+            Glyph = glyph,
+            Opacity = 0.55,
+            VerticalAlignment = VerticalAlignment.Center,
+            Width = 16
+        });
+        stackPanel.Children.Add(new TextBlock
         {
             Text = text,
-            FontSize = 15,
-            Opacity = 0.76,
+            FontSize = 13.5,
+            Opacity = 0.78,
+            VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap
-        };
+        });
+
+        return stackPanel;
     }
 
     private RectInt32 GetWindowBoundsForImage(int pixelWidth, int pixelHeight)
@@ -568,13 +682,13 @@ public sealed partial class PreviewWindow
         var displayArea = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary);
         var maxWidth = Math.Min(displayArea.WorkArea.Width / scale * 0.82, 1220);
         var maxHeight = Math.Min(displayArea.WorkArea.Height / scale * 0.82, 840);
-        var maxImageWidth = Math.Max(maxWidth - 68, 360);
-        var maxImageHeight = Math.Max(maxHeight - 118, 260);
+        var maxImageWidth = Math.Max(maxWidth - 64, 360);
+        var maxImageHeight = Math.Max(maxHeight - 110, 260);
         var imageScale = Math.Min(Math.Min(maxImageWidth / pixelWidth, maxImageHeight / pixelHeight), 1.0);
         var contentWidth = Math.Round(pixelWidth * imageScale);
         var contentHeight = Math.Round(pixelHeight * imageScale);
-        var windowWidth = Math.Clamp(contentWidth + 68, 500, maxWidth);
-        var windowHeight = Math.Clamp(contentHeight + 118, 360, maxHeight);
+        var windowWidth = Math.Clamp(contentWidth + 64, 500, maxWidth);
+        var windowHeight = Math.Clamp(contentHeight + 110, 360, maxHeight);
         var windowSize = new SizeInt32(
             (int)Math.Round(windowWidth * scale),
             (int)Math.Round(windowHeight * scale));
@@ -596,7 +710,7 @@ public sealed partial class PreviewWindow
     {
         if (!payload.HasVideo)
         {
-            return GetCenteredBounds(GetConstrainedWindowSize(700, 420));
+            return GetCenteredBounds(GetConstrainedWindowSize(720, 460));
         }
 
         try
@@ -639,7 +753,7 @@ public sealed partial class PreviewWindow
         var maxHeight = Math.Min(displayArea.WorkArea.Height / scale * 0.82, 820);
         var lineCount = CountLines(payload.Text);
         var longestLineLength = GetLongestLineLength(payload.Text);
-        var windowWidth = Math.Clamp((longestLineLength * 7.4) + 190, 720, maxWidth);
+        var windowWidth = Math.Clamp((longestLineLength * 7.2) + 200, 720, maxWidth);
         var windowHeight = Math.Clamp((Math.Min(lineCount, 34) * 19.0) + 132, 500, maxHeight);
         var windowSize = new SizeInt32(
             (int)Math.Round(windowWidth * scale),
@@ -656,66 +770,6 @@ public sealed partial class PreviewWindow
         var y = workArea.Y + ((workArea.Height - windowSize.Height) / 2);
 
         return new RectInt32(x, y, windowSize.Width, windowSize.Height);
-    }
-
-    private async Task AnimateWindowBoundsAsync(RectInt32 targetBounds, TimeSpan duration)
-    {
-        var startPosition = AppWindow.Position;
-        var startSize = AppWindow.Size;
-        var startBounds = new RectInt32(startPosition.X, startPosition.Y, startSize.Width, startSize.Height);
-
-        if (duration <= TimeSpan.Zero || AreBoundsEqual(startBounds, targetBounds))
-        {
-            AppWindow.MoveAndResize(targetBounds);
-
-            return;
-        }
-
-        var stopwatch = Stopwatch.StartNew();
-
-        while (true)
-        {
-            var progress = Math.Min(stopwatch.Elapsed.TotalMilliseconds / duration.TotalMilliseconds, 1.0);
-            var easedProgress = EaseOutCubic(progress);
-
-            AppWindow.MoveAndResize(InterpolateBounds(startBounds, targetBounds, easedProgress));
-
-            if (progress >= 1.0)
-            {
-                break;
-            }
-
-            await Task.Delay(WindowAnimationFrameDelay);
-        }
-
-        AppWindow.MoveAndResize(targetBounds);
-    }
-
-    private static RectInt32 InterpolateBounds(RectInt32 from, RectInt32 to, double progress)
-    {
-        return new RectInt32(
-            Interpolate(from.X, to.X, progress),
-            Interpolate(from.Y, to.Y, progress),
-            Interpolate(from.Width, to.Width, progress),
-            Interpolate(from.Height, to.Height, progress));
-    }
-
-    private static int Interpolate(int from, int to, double progress)
-    {
-        return (int)Math.Round(from + ((to - from) * progress));
-    }
-
-    private static double EaseOutCubic(double progress)
-    {
-        return 1.0 - Math.Pow(1.0 - progress, 3);
-    }
-
-    private static bool AreBoundsEqual(RectInt32 left, RectInt32 right)
-    {
-        return left.X == right.X
-            && left.Y == right.Y
-            && left.Width == right.Width
-            && left.Height == right.Height;
     }
 
     private static int CountLines(string text)
