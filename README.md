@@ -71,6 +71,22 @@ winget install WinQuickLook --source msstore
 
 That's it! WinQuickLook will run in the background, ready whenever you need it.
 
+## 🛠️ Development
+
+The repository keeps the current WPF app and the Windows App SDK / WinUI 3 app separated:
+
+- `src/WinQuickLook.App` - WPF app entry point and WPF preview UI.
+- `src/WinQuickLook.Core` - WPF app preview handlers and shared WPF-era services.
+- `src/WinQuickLook.App.WinUI` - WinUI app entry point, tray integration, Explorer selection, and WinUI preview window.
+- `src/WinQuickLook.Preview` - UI-independent preview provider layer used by the WinUI app.
+- `src/WinQuickLook.Shell` - WPF-free shell integration used by the WinUI app.
+
+Run the WinUI 3 app during vNext development:
+
+```bash
+dotnet run --project src/WinQuickLook.App.WinUI/WinQuickLook.App.WinUI.csproj -p:Platform=x64
+```
+
 ## 💡 Use Cases
 
 - **Quick Document Review** - Scan through multiple documents without opening Word, PDF readers, etc.
