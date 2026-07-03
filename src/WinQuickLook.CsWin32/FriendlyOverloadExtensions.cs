@@ -1,30 +1,12 @@
-﻿using System;
-
-using Windows.Win32.Foundation;
+﻿using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
-
-using IServiceProvider = Windows.Win32.System.Com.IServiceProvider;
 
 namespace Windows.Win32;
 
 public static class FriendlyOverloadExtensions
 {
-    public static HRESULT QueryService<T>(this IServiceProvider serviceProvider, in Guid guidService, out T ppvObject)
-    {
-        var hr = serviceProvider.QueryService(guidService, typeof(T).GUID, out var o);
-        ppvObject = (T)o;
-        return hr;
-    }
-
     extension(IFolderView folderView)
     {
-        public HRESULT GetFolder<T>(out T ppv)
-        {
-            var hr = folderView.GetFolder(typeof(T).GUID, out var o);
-            ppv = (T)o;
-            return hr;
-        }
-
         public unsafe void Item(int iItemIndex, out nint ppidl)
         {
             fixed (nint* ppidlLocal = &ppidl)
