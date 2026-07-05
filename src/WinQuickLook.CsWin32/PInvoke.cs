@@ -19,20 +19,6 @@ public static partial class PInvoke
     public const uint MF_SOURCE_READER_FIRST_VIDEO_STREAM = 0xFFFFFFFCU;
     public const uint MF_SOURCE_READER_FIRST_AUDIO_STREAM = 0xFFFFFFFDU;
 
-    public static HRESULT SHCreateItemFromParsingName<T>(string pszPath, System.Com.IBindCtx? pbc, out T ppv)
-    {
-        var hr = SHCreateItemFromParsingName(pszPath, pbc, typeof(T).GUID, out var o);
-        ppv = (T)o;
-        return hr;
-    }
-
-    public static HRESULT SHGetPropertyStoreFromParsingName<T>(string pszPath, System.Com.IBindCtx? pbc, GETPROPERTYSTOREFLAGS flags, out T ppv)
-    {
-        var hr = SHGetPropertyStoreFromParsingName(pszPath, pbc, flags, typeof(T).GUID, out var o);
-        ppv = (T)o;
-        return hr;
-    }
-
     public static unsafe HWND CreateWindowEx2(WINDOW_EX_STYLE dwExStyle, string lpClassName, string lpWindowName, WINDOW_STYLE dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, SafeHandle? hMenu, SafeHandle? hInstance)
     {
         return CreateWindowEx(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, null);

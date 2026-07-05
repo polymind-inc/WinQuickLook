@@ -135,9 +135,9 @@ public class ShellAssociationProvider
 
                         PInvoke.SHCreateItemFromParsingName(fileInfo.FullName, null, out IShellItem shellItem);
 
-                        shellItem.BindToHandler(null, PInvoke.BHID_DataObject, typeof(Windows.Win32.System.Com.IDataObject).GUID, out var dataObject);
+                        shellItem.BindToHandler<Windows.Win32.System.Com.IDataObject>(null, PInvoke.BHID_DataObject, out var dataObject);
 
-                        assocHandler.Invoke((Windows.Win32.System.Com.IDataObject)dataObject);
+                        assocHandler.Invoke(dataObject);
 
                         Marshal.ReleaseComObject(dataObject);
                         Marshal.ReleaseComObject(shellItem);
