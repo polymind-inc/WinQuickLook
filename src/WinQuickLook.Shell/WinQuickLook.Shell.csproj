@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WinQuickLook</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WinQuickLook.CsWin32\WinQuickLook.CsWin32.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows10.0.26100": {
+      "winquicklook.cswin32": {
+        "type": "Project"
+      }
+    }
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0-windows10.0.26100": {
+      "Microsoft.WindowsAppSDK": {
+        "type": "Direct",
+        "requested": "[2.1.3, )",
+        "resolved": "2.1.3",
+        "contentHash": "46KCntcmWPS0nbV3a8iEMslpYy0W9wTsmkANrXFxDWuiAnm8jXytFNvwNVN5HfoA3d+Cxb3pO+JE2UNnB5wn7w==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.AI": "2.1.10",
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.DWrite": "2.1.0",
+          "Microsoft.WindowsAppSDK.Foundation": "2.0.21",
+          "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.13",
+          "Microsoft.WindowsAppSDK.ML": "2.1.1",
+          "Microsoft.WindowsAppSDK.Runtime": "[2.1.3]",
+          "Microsoft.WindowsAppSDK.Widgets": "2.0.5",
+          "Microsoft.WindowsAppSDK.WinUI": "2.1.0"
+        }
+      },
+      "Markdig": {
+        "type": "Transitive",
+        "resolved": "1.2.0",
+        "contentHash": "LoBVOgeDWfHthWTPzQJkjDkxImqBXRA5XpuTyjdM4SAURyWQGG1CbEEbfPbmvAavggnAZPaTYpbhIPUurWvIXA=="
+      },
+      "Microsoft.Web.WebView2": {
+        "type": "Transitive",
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
+      },
+      "Microsoft.Windows.AI.MachineLearning": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "A5BbYPLVrcaRJvpwx0nv7aMDOMqR20qaw9EaLcUe9pkSArzKoSk6cilRsSioU+eRa9+HahidBZTegawdswKqIQ==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "Microsoft.Windows.SDK.BuildTools": {
+        "type": "Transitive",
+        "resolved": "10.0.26100.4654",
+        "contentHash": "2mgcOlj/t2RfSyyw+pVESfO+Tk1RkfQzto9Vrq42M1lUQIfQEwbi8QLha9GXWIOj+TFzeHIEJckIoF25mgiM8A=="
+      },
+      "Microsoft.Windows.SDK.BuildTools.MSIX": {
+        "type": "Transitive",
+        "resolved": "1.7.251221100",
+        "contentHash": "f4aIZJ0NUth2403oxrpR+9rxVzZVI6dabqB21u8ncnk8eJAKCs9m77E4iYAnvP1YwrRe4axz3f8+yUcttNSfEA=="
+      },
+      "Microsoft.WindowsAppSDK.AI": {
+        "type": "Transitive",
+        "resolved": "2.1.10",
+        "contentHash": "4rOxfQbOZkdGK/wzajqyXZeCl9WW1qdtb63hTBFEA7pZ14iyF3iV64VNg6KOXuRRUL64/wyHHsiBwLlvFSFgcw==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.Foundation": "2.0.21"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Base": {
+        "type": "Transitive",
+        "resolved": "2.0.4",
+        "contentHash": "QXSy2llX2/Bx9dYWGUEsb10F40q94ZiDnPMzqa2/qRmTG4y9EXxGp6uHITb7c0b4FCa+6KFBlgh6D53M0QEMEg==",
+        "dependencies": {
+          "Microsoft.Windows.SDK.BuildTools": "10.0.26100.4654",
+          "Microsoft.Windows.SDK.BuildTools.MSIX": "1.7.251221100"
+        }
+      },
+      "Microsoft.WindowsAppSDK.DWrite": {
+        "type": "Transitive",
+        "resolved": "2.1.0",
+        "contentHash": "dgix7NSeo7Z8SZPyrsOqYm/6OUvBveHCiVyorYecmtDYoZW26dJ6/i9yveIxgWvmFpgfKXPeIuQBCvhbetHiYg==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.3"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Foundation": {
+        "type": "Transitive",
+        "resolved": "2.0.21",
+        "contentHash": "Wzr4c9dSXXcNQw67wVmy+32FXW6+TLyrQHD5eZXAjNydMsLRMZjUXzD1qQgBg1bdgzjlkYnOyYqoXbOL6lfqkw==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.13"
+        }
+      },
+      "Microsoft.WindowsAppSDK.InteractiveExperiences": {
+        "type": "Transitive",
+        "resolved": "2.0.13",
+        "contentHash": "jxzb2F0thCzUhxX3EMthKyxMaWINGSAf1/uMfS3pyCODCzHoR39LUQE22DZDAmMJEM4pebCnIj2PYRQjSuy65Q==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.3"
+        }
+      },
+      "Microsoft.WindowsAppSDK.ML": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "q+luYBGlPdzMwhOsZCUmWbIZMvmc0pn5+nBvrKyQzvd/mC2+YBEaqfN2/zkfkFKsmJUuPvnG73RouAP/1oKPaA==",
+        "dependencies": {
+          "Microsoft.Windows.AI.MachineLearning": "[2.1.1, 3.0.0)",
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.Foundation": "2.0.21"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Runtime": {
+        "type": "Transitive",
+        "resolved": "2.1.3",
+        "contentHash": "dbddzTTnePoiFEw2h9QeGxJ8jyFtx7OEMIt053vjd/FQU4hzdnK9/LGPF5cwCkCD8gLvrXqyfR8AhCjz5Ni9sQ==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.4"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Widgets": {
+        "type": "Transitive",
+        "resolved": "2.0.5",
+        "contentHash": "lRz+8+QU65gV8hRzLVE+GRsPKZ42lnzqkmsw96HzQd/DuFYfr4JYpUU7ZZ5YrkV2EfQe4BCmoRKAeZ3WwalMcg==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.3"
+        }
+      },
+      "Microsoft.WindowsAppSDK.WinUI": {
+        "type": "Transitive",
+        "resolved": "2.1.0",
+        "contentHash": "HXFdlOESmUM7RPPWO5z4lpJX7zIPhDDPngfEP1itAUG/1SWFWKxYdEpt6nciMGITj92OpSK70R8/h06j5tfhIg==",
+        "dependencies": {
+          "Microsoft.Web.WebView2": "1.0.3719.77",
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.Foundation": "2.0.21",
+          "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.13"
+        }
+      },
+      "System.Numerics.Tensors": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
+      },
+      "winquicklook.cswin32": {
+        "type": "Project"
+      },
+      "winquicklook.preview": {
+        "type": "Project",
+        "dependencies": {
+          "Markdig": "[1.2.0, )"
+        }
+      },
+      "winquicklook.shell": {
+        "type": "Project",
+        "dependencies": {
+          "WinQuickLook.CsWin32": "[1.0.0, )"
+        }
+      }
+    },
+    "net10.0-windows10.0.26100/win-arm64": {
+      "Microsoft.Web.WebView2": {
+        "type": "Transitive",
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
+      },
+      "Microsoft.Windows.AI.MachineLearning": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "A5BbYPLVrcaRJvpwx0nv7aMDOMqR20qaw9EaLcUe9pkSArzKoSk6cilRsSioU+eRa9+HahidBZTegawdswKqIQ==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Foundation": {
+        "type": "Transitive",
+        "resolved": "2.0.21",
+        "contentHash": "Wzr4c9dSXXcNQw67wVmy+32FXW6+TLyrQHD5eZXAjNydMsLRMZjUXzD1qQgBg1bdgzjlkYnOyYqoXbOL6lfqkw==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.13"
+        }
+      }
+    },
+    "net10.0-windows10.0.26100/win-x64": {
+      "Microsoft.Web.WebView2": {
+        "type": "Transitive",
+        "resolved": "1.0.3719.77",
+        "contentHash": "t+ucyKw5NTwMjsUrDF6R9Lk40lpcKQD1/HgyGFxl49tdA4h9dKlsj6FYGEmDRpFNfnTpENuTypMcdbrlkqBdDA=="
+      },
+      "Microsoft.Windows.AI.MachineLearning": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "A5BbYPLVrcaRJvpwx0nv7aMDOMqR20qaw9EaLcUe9pkSArzKoSk6cilRsSioU+eRa9+HahidBZTegawdswKqIQ==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "Microsoft.WindowsAppSDK.Foundation": {
+        "type": "Transitive",
+        "resolved": "2.0.21",
+        "contentHash": "Wzr4c9dSXXcNQw67wVmy+32FXW6+TLyrQHD5eZXAjNydMsLRMZjUXzD1qQgBg1bdgzjlkYnOyYqoXbOL6lfqkw==",
+        "dependencies": {
+          "Microsoft.WindowsAppSDK.Base": "2.0.4",
+          "Microsoft.WindowsAppSDK.InteractiveExperiences": "2.0.13"
+        }
+      }
+    }
+  }
+}

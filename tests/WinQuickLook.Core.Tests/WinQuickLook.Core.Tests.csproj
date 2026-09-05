@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WinQuickLook.Core\WinQuickLook.Core.csproj" />
+    <ProjectReference Include="..\..\src\WinQuickLook.Preview\WinQuickLook.Preview.csproj" />
   </ItemGroup>
 
 </Project>
