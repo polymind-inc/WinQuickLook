@@ -1,0 +1,141 @@
+<Window
+    x:Class="WinQuickLook.App.WinUI.PreviewWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid
+        x:Name="Root"
+        Background="Transparent"
+        IsTabStop="True"
+        KeyDown="Root_KeyDown">
+        <Grid.Resources>
+            <Style x:Key="ChromeIconButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="MinWidth" Value="34" />
+                <Setter Property="MinHeight" Value="32" />
+                <Setter Property="Width" Value="34" />
+                <Setter Property="Height" Value="32" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="UseSystemFocusVisuals" Value="False" />
+            </Style>
+            <Style x:Key="ChromeCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource ChromeIconButtonStyle}" />
+        </Grid.Resources>
+
+        <Grid x:Name="PreviewSurface">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="46" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid x:Name="DragRegion" Padding="20,0,8,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    VerticalAlignment="Center"
+                    Spacing="1">
+                    <TextBlock
+                        x:Name="TitleText"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        x:Name="SubtitleText"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Spacing="2">
+                    <Border
+                        x:Name="CounterPill"
+                        Margin="0,0,8,0"
+                        Padding="10,3"
+                        VerticalAlignment="Center"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="10"
+                        Visibility="Collapsed">
+                        <TextBlock
+                            x:Name="CounterText"
+                            FontSize="11"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Border>
+
+                    <Button
+                        x:Name="PrevButton"
+                        Click="PrevButton_Click"
+                        Style="{StaticResource ChromeIconButtonStyle}"
+                        ToolTipService.ToolTip="Previous (Left)"
+                        Visibility="Collapsed">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="12"
+                            Glyph="&#xE76B;" />
+                    </Button>
+                    <Button
+                        x:Name="NextButton"
+                        Click="NextButton_Click"
+                        Style="{StaticResource ChromeIconButtonStyle}"
+                        ToolTipService.ToolTip="Next (Right)"
+                        Visibility="Collapsed">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="12"
+                            Glyph="&#xE76C;" />
+                    </Button>
+
+                    <Border
+                        x:Name="HeaderSeparator"
+                        Width="1"
+                        Height="18"
+                        Margin="6,0"
+                        Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        Visibility="Collapsed" />
+
+                    <Button
+                        Click="CloseButton_Click"
+                        Style="{StaticResource ChromeCloseButtonStyle}"
+                        ToolTipService.ToolTip="Close (Esc)">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="11"
+                            Glyph="&#xE711;" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Border
+                Grid.Row="1"
+                Margin="16,2,16,16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <Grid>
+                    <ContentControl
+                        x:Name="PrimaryContent"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch" />
+                    <ContentControl
+                        x:Name="SecondaryContent"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
+                        Opacity="0"
+                        Visibility="Collapsed" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
