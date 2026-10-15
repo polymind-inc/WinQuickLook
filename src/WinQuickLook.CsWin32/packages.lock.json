@@ -4,9 +4,9 @@
     "net10.0-windows10.0.26100": {
       "Microsoft.Windows.CsWin32": {
         "type": "Direct",
-        "requested": "[0.3.358, )",
-        "resolved": "0.3.358",
-        "contentHash": "rc73qnLIcOF7penJCJ7pqAO2uW4fKxIqrBAypNkvnEGDHGoNjNP7+69EPqg3V5jwAytX+o1aAvvZ3dktGw3Rtw==",
+        "requested": "[0.3.363, )",
+        "resolved": "0.3.363",
+        "contentHash": "Fd1p6Fr5H6A+c4FO033CojR8jKsvYZm6vigrKvB/auI40KXb0Vb+ge0F6baGBZptc1yIKVxmh/Iu8/KvLVQ94A==",
         "dependencies": {
           "Microsoft.Windows.SDK.Win32Docs": "0.1.42-alpha",
           "Microsoft.Windows.SDK.Win32Metadata": "71.0.30-preview",
