@@ -232,6 +232,12 @@
       },
       "winquicklook.cswin32": {
         "type": "Project"
+      },
+      "winquicklook.preview": {
+        "type": "Project",
+        "dependencies": {
+          "Markdig": "[1.2.0, )"
+        }
       }
     }
   }
