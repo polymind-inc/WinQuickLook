@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-using WinQuickLook.Controls;
+
 using WinQuickLook.Handlers;
 
 using Xunit;
@@ -9,8 +9,8 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class GenericFilePreviewHandlerTests
 {
-    [WpfFact]
-    public void TryCreateViewer_AnyFile_ReturnsGenericFileControl()
+    [StaFact]
+    public void TryCreateViewer_AnyFile_ReturnsGenericPreview()
     {
         var fileInfo = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "SampleFiles", "test.cs"));
 
@@ -20,10 +20,10 @@ public class GenericFilePreviewHandlerTests
 
         Assert.True(actual);
         Assert.NotNull(handlerResult);
-        Assert.IsType<GenericFileControl>(handlerResult.Content);
+        Assert.IsType<GenericPreview>(handlerResult.Content);
     }
 
-    [WpfFact]
+    [StaFact]
     public void TryCreateViewer_AnyFile_ReturnsExpectedRequestSize()
     {
         var fileInfo = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "SampleFiles", "test.cs"));

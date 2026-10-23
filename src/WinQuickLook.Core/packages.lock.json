@@ -2,29 +2,25 @@
   "version": 1,
   "dependencies": {
     "net10.0-windows10.0.26100": {
-      "AvalonEdit": {
-        "type": "Direct",
-        "requested": "[6.3.1.120, )",
-        "resolved": "6.3.1.120",
-        "contentHash": "6ASBKPzAg64BLDlFOJo4Ypr1sA/6hB5+TfHLJaZYUSTE0jgxvKlVqKeo/ISTG9qEMxu604qUu6BGugmJkfdrNw=="
-      },
-      "Cylinder.WPF": {
-        "type": "Direct",
-        "requested": "[1.0.0-preview.2, )",
-        "resolved": "1.0.0-preview.2",
-        "contentHash": "Vi65qfphYUN0O5nm1/1CJQvOmuB8Yt3PRhjvze3uLbktlg8rtX1J19E/bby8BL9IedR4JjGMqfWKUse5EW/6UA=="
-      },
       "Markdig": {
         "type": "Direct",
         "requested": "[1.3.2, )",
         "resolved": "1.3.2",
         "contentHash": "fZgOC/3CswUrndjDTac70aQpYdtxbW5+5bRumR7vzvI2HJbkmgKisB1c9oT+GA6v0jB/JDR9BLa9FiPzQmaK6A=="
       },
-      "Microsoft.Web.WebView2": {
+      "System.Drawing.Common": {
         "type": "Direct",
-        "requested": "[1.0.4022.49, )",
-        "resolved": "1.0.4022.49",
-        "contentHash": "Dwewh8bbbXoFiF2y0jT3MBEV5ZXZVA7FDbMl6DixUCCLQAoymLMxMwqibdBaY/eWCG/BBSAILUOFDIzJZ9lfNQ=="
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "ShkEj8jOhklJgrN3SoaVbCcopvqyIgVXHso2/eibQBL7IZxzJjND77UYVlViHqpwPxyQeA67IOut4b41clBkQw==",
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "10.0.9"
+        }
+      },
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "10.0.9",
+        "contentHash": "dk5HKolAR9bBxlL4dl6Koaf0s/Q47QApog+/o341LSuvWGW6ig4q5fTsgYG0MrK//l2Slv6mygncMK/8lgXVDg=="
       },
       "winquicklook.cswin32": {
         "type": "Project"

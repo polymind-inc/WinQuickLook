@@ -1,9 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -17,62 +16,60 @@ using WinQuickLook.Interop;
 
 namespace WinQuickLook.Controls;
 
-public class ShellFileControl : HwndHost
+public class ShellFileControl : IDisposable
 {
-    public ShellFileControl() => Unloaded += (_, _) => UnloadPreviewHandler();
-
-    protected override void Dispose(bool disposing)
+    public ShellFileControl(nint parent = 0)
     {
-        try
+        if (parent != 0)
         {
-            if (disposing)
+            Handle = PInvoke.CreateWindowEx2(0, "static", "",
+                WINDOW_STYLE.WS_CHILD | WINDOW_STYLE.WS_VISIBLE | WINDOW_STYLE.WS_CLIPCHILDREN,
+                0, 0, 0, 0, new HWND(parent), null, null);
+            if (Handle == 0)
             {
-                VerifyAccess();
-                UnloadPreviewHandler();
+                throw new Win32Exception(Marshal.GetLastPInvokeError());
             }
         }
-        finally
+    }
+
+    public nint Handle { get; }
+
+    private int _width;
+    private int _height;
+    private bool _disposed;
+
+    public void Resize(int x, int y, int width, int height)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _width = width;
+        _height = height;
+        if (Handle != 0)
         {
-            base.Dispose(disposing);
+            PInvoke.SetWindowPos(new HWND(Handle), default, x, y, width, height,
+                SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
         }
+        _previewHandler?.SetRect(new RECT { right = width, bottom = height });
     }
 
-    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    public void Dispose()
     {
-        base.OnRenderSizeChanged(sizeInfo);
-
-        if (_previewHandler is not null)
+        if (_disposed)
         {
-            var rect = new RECT { left = 0, top = 0, right = (int)sizeInfo.NewSize.Width, bottom = (int)sizeInfo.NewSize.Height };
-
-            _previewHandler.SetRect(rect);
+            return;
         }
-    }
-
-    protected override HandleRef BuildWindowCore(HandleRef hwndParent)
-    {
-        var hwndHost = PInvoke.CreateWindowEx2(0,
-            "static", "",
-            WINDOW_STYLE.WS_CHILD | WINDOW_STYLE.WS_VISIBLE | WINDOW_STYLE.WS_CLIPCHILDREN,
-            0, 0,
-            (int)ActualWidth, (int)ActualHeight,
-            new HWND(hwndParent.Handle),
-            null,
-            null);
-
-        return new HandleRef(this, hwndHost);
-    }
-
-    protected override void DestroyWindowCore(HandleRef hwnd)
-    {
+        _disposed = true;
         try
         {
             UnloadPreviewHandler();
         }
         finally
         {
-            PInvoke.DestroyWindow(new HWND(hwnd.Handle));
+            if (Handle != 0)
+            {
+                PInvoke.DestroyWindow(new HWND(Handle));
+            }
         }
+        GC.SuppressFinalize(this);
     }
 
     private IPreviewHandler? _previewHandler;
@@ -80,6 +77,7 @@ public class ShellFileControl : HwndHost
 
     public bool Open(FileInfo fileInfo)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (!TryGetPreviewHandlerCLSID(fileInfo, out var clsid))
         {
             return false;
@@ -95,6 +93,7 @@ public class ShellFileControl : HwndHost
 
     internal bool Open(FileInfo fileInfo, IPreviewHandler previewHandler)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         Stream? previewStream = null;
         var keepHandler = false;
 
@@ -105,7 +104,7 @@ public class ShellFileControl : HwndHost
                 return false;
             }
 
-            var rect = new RECT { left = 0, top = 0, right = (int)ActualWidth, bottom = (int)ActualHeight };
+            var rect = new RECT { left = 0, top = 0, right = _width, bottom = _height };
 
             if (previewHandler.SetWindow(new HWND(Handle), rect).Failed || previewHandler.DoPreview().Failed)
             {

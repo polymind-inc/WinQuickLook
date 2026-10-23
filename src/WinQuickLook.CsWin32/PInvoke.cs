@@ -19,6 +19,24 @@ public static partial class PInvoke
     public const uint MF_SOURCE_READER_FIRST_VIDEO_STREAM = 0xFFFFFFFCU;
     public const uint MF_SOURCE_READER_FIRST_AUDIO_STREAM = 0xFFFFFFFDU;
 
+    public static unsafe int GetObject(SafeHandle bitmap, out Graphics.Gdi.BITMAP value)
+    {
+        fixed (Graphics.Gdi.BITMAP* pointer = &value)
+        {
+            return GetObject(bitmap, new Span<byte>(pointer, sizeof(Graphics.Gdi.BITMAP)));
+        }
+    }
+
+    public static unsafe int GetDIBits(Graphics.Gdi.HDC dc, SafeHandle bitmap, uint start, uint lines,
+        Span<byte> pixels, ref Graphics.Gdi.BITMAPINFO info, Graphics.Gdi.DIB_USAGE usage)
+    {
+        fixed (byte* pixelPointer = pixels)
+        fixed (Graphics.Gdi.BITMAPINFO* infoPointer = &info)
+        {
+            return GetDIBits(dc, bitmap, start, lines, pixelPointer, infoPointer, usage);
+        }
+    }
+
     public static unsafe HRESULT SHCreateItemWithParent(UI.Shell.IShellFolder parent, nint pidl, out UI.Shell.IShellItem item) => SHCreateItemWithParent(null, parent, in *(ITEMIDLIST*)pidl, out item);
 
     public static unsafe HWND CreateWindowEx2(WINDOW_EX_STYLE dwExStyle, string lpClassName, string lpWindowName, WINDOW_STYLE dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, SafeHandle? hMenu, SafeHandle? hInstance)

@@ -1,8 +1,8 @@
-﻿using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using System;
+using System.IO;
+
+using Windows.Foundation;
+using Windows.Graphics.Imaging;
 
 using WinQuickLook.Extensions;
 
@@ -14,64 +14,25 @@ public class ImageFilePreviewHandler : FilePreviewHandler
 
     protected override bool TryCreateViewer(FileInfo fileInfo, out HandlerResult? handlerResult)
     {
-        if (!TryGetImageSize(fileInfo, out var imageSize))
-        {
-            handlerResult = default;
-
-            return false;
-        }
-
-        var requestSize = imageSize.FitTo(1200);
-
-        var bitmap = LoadImage(fileInfo, requestSize);
-
-        var image = new Image();
-
-        using (image.Initialize())
-        {
-            image.Stretch = Stretch.Uniform;
-            image.StretchDirection = StretchDirection.DownOnly;
-            image.Source = bitmap;
-        }
-
-        handlerResult = new HandlerResult { Content = image, RequestSize = requestSize };
-
-        return true;
-    }
-
-    private static BitmapImage LoadImage(FileInfo fileInfo, Size decodeSize)
-    {
-        using var stream = fileInfo.OpenReadNoLock();
-
-        var bitmap = new BitmapImage();
-
-        using (bitmap.Initialize())
-        {
-            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-            bitmap.DecodePixelWidth = (int)decodeSize.Width;
-            bitmap.DecodePixelHeight = (int)decodeSize.Height;
-            bitmap.StreamSource = stream;
-        }
-
-        return bitmap;
-    }
-
-    private static bool TryGetImageSize(FileInfo fileInfo, out Size size)
-    {
         try
         {
             using var stream = fileInfo.OpenReadNoLock();
-
-            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
-
-            size = new Size(decoder.Frames[0].Width, decoder.Frames[0].Height);
-
+            using var randomAccess = stream.AsRandomAccessStream();
+            var decoder = BitmapDecoder.CreateAsync(randomAccess).AsTask().GetAwaiter().GetResult();
+            var size = new Size(decoder.OrientedPixelWidth, decoder.OrientedPixelHeight);
+            stream.Position = 0;
+            using var buffer = new MemoryStream();
+            stream.CopyTo(buffer);
+            handlerResult = new HandlerResult
+            {
+                Content = new ImagePreview(fileInfo, buffer.ToArray(), size),
+                RequestSize = size
+            };
             return true;
         }
         catch
         {
-            size = Size.Empty;
-
+            handlerResult = null;
             return false;
         }
     }

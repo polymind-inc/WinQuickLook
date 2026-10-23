@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -23,7 +21,7 @@ public class ShellAssociationProvider
     {
         public required string Name { get; init; }
         public required bool IsDefault { get; init; }
-        public ImageSource? Icon { get; init; }
+        public byte[]? Icon { get; init; }
     }
 
     public bool TryGetDefault(FileInfo fileInfo, [NotNullWhen(true)] out Entry? entry)
@@ -172,7 +170,7 @@ public class ShellAssociationProvider
         }
     }
 
-    private static BitmapSource? GetIconFromLocation(string? iconLocation, int iconIndex)
+    private static byte[]? GetIconFromLocation(string? iconLocation, int iconIndex)
     {
         if (iconLocation is null)
         {
@@ -192,7 +190,7 @@ public class ShellAssociationProvider
         return null;
     }
 
-    private static BitmapSource? GetIconFromResource(string path, int iconIndex)
+    private static byte[]? GetIconFromResource(string path, int iconIndex)
     {
         Span<HICON> iconSmall = new HICON[1];
 
@@ -200,8 +198,11 @@ public class ShellAssociationProvider
 
         try
         {
-            return Imaging.CreateBitmapSourceFromHIcon(iconSmall[0], Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
-                          .AsFreeze();
+            using var icon = Icon.FromHandle(iconSmall[0]);
+            using var bitmap = icon.ToBitmap();
+            using var buffer = new MemoryStream();
+            bitmap.Save(buffer, ImageFormat.Png);
+            return buffer.ToArray();
         }
         catch
         {
@@ -213,7 +214,7 @@ public class ShellAssociationProvider
         }
     }
 
-    private static BitmapImage? GetIconFromIndirectString(string path)
+    private static byte[]? GetIconFromIndirectString(string path)
     {
         Span<char> pszOut = new char[512];
 
@@ -229,15 +230,6 @@ public class ShellAssociationProvider
             return null;
         }
 
-        var bitmap = new BitmapImage();
-
-        using (bitmap.Initialize())
-        {
-            bitmap.CreateOptions = BitmapCreateOptions.None;
-            bitmap.CacheOption = BitmapCacheOption.None;
-            bitmap.UriSource = new Uri(iconImageLocation);
-        }
-
-        return bitmap;
+        return File.ReadAllBytes(iconImageLocation);
     }
 }

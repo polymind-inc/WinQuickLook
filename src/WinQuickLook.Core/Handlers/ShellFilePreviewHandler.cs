@@ -3,8 +3,8 @@
 using Windows.Win32;
 using Windows.Win32.UI.Shell;
 
-using WinQuickLook.Controls;
-using WinQuickLook.Extensions;
+
+
 
 namespace WinQuickLook.Handlers;
 
@@ -24,14 +24,7 @@ public class ShellFilePreviewHandler : FilePreviewHandler
             return false;
         }
 
-        var shellFileControl = new ShellFileControl();
-
-        using (shellFileControl.Initialize())
-        {
-            shellFileControl.Loaded += (_, _) => shellFileControl.Open(fileInfo);
-        }
-
-        handlerResult = new HandlerResult { Content = shellFileControl };
+        handlerResult = new HandlerResult { Content = new ShellPreview(fileInfo) };
 
         return true;
     }
