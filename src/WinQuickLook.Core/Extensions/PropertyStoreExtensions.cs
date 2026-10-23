@@ -10,16 +10,16 @@ namespace WinQuickLook.Extensions;
 
 internal static class PropertyStoreExtensions
 {
+    private const ushort VariantString = 31;
+    private const ushort VariantVector = 0x1000;
+
     public static string? GetString(this IPropertyStore propertyStore, PROPERTYKEY key)
     {
-        if (propertyStore.GetValue(key, out var value).Failed)
-        {
-            return null;
-        }
+        var hr = propertyStore.GetValue(key, out var value);
 
         try
         {
-            return Marshal.PtrToStringUni(value.pwszVal);
+            return hr.Succeeded && value.vt == VariantString ? Marshal.PtrToStringUni(value.pwszVal) : null;
         }
         finally
         {
@@ -29,13 +29,15 @@ internal static class PropertyStoreExtensions
 
     public static string[] GetStringArray(this IPropertyStore propertyStore, PROPERTYKEY key)
     {
-        if (propertyStore.GetValue(key, out var value).Failed)
-        {
-            return [];
-        }
+        var hr = propertyStore.GetValue(key, out var value);
 
         try
         {
+            if (hr.Failed || value.vt != (VariantVector | VariantString))
+            {
+                return [];
+            }
+
             return Enumerable.Range(0, (int)value.calpwstr.cElems)
                              .Select(x => Marshal.PtrToStringUni(Marshal.ReadIntPtr(value.calpwstr.pElems, x * IntPtr.Size))!)
                              .ToArray();

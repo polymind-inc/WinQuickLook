@@ -13,11 +13,30 @@ using Windows.Win32.UI.Shell.PropertiesSystem;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 using WinQuickLook.Extensions;
+using WinQuickLook.Interop;
 
 namespace WinQuickLook.Controls;
 
 public class ShellFileControl : HwndHost
 {
+    public ShellFileControl() => Unloaded += (_, _) => UnloadPreviewHandler();
+
+    protected override void Dispose(bool disposing)
+    {
+        try
+        {
+            if (disposing)
+            {
+                VerifyAccess();
+                UnloadPreviewHandler();
+            }
+        }
+        finally
+        {
+            base.Dispose(disposing);
+        }
+    }
+
     protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
     {
         base.OnRenderSizeChanged(sizeInfo);
@@ -46,17 +65,18 @@ public class ShellFileControl : HwndHost
 
     protected override void DestroyWindowCore(HandleRef hwnd)
     {
-        if (_previewHandler is not null)
+        try
         {
-            UnloadPreviewHandler(_previewHandler);
-
-            _previewHandler = null;
+            UnloadPreviewHandler();
         }
-
-        PInvoke.DestroyWindow(new HWND(hwnd.Handle));
+        finally
+        {
+            PInvoke.DestroyWindow(new HWND(hwnd.Handle));
+        }
     }
 
     private IPreviewHandler? _previewHandler;
+    private Stream? _previewStream;
 
     public bool Open(FileInfo fileInfo)
     {
@@ -70,26 +90,44 @@ public class ShellFileControl : HwndHost
             return false;
         }
 
-        if (!TryInitializePreviewHandler(previewHandler, fileInfo))
+        return Open(fileInfo, previewHandler);
+    }
+
+    internal bool Open(FileInfo fileInfo, IPreviewHandler previewHandler)
+    {
+        Stream? previewStream = null;
+        var keepHandler = false;
+
+        try
         {
-            UnloadPreviewHandler(previewHandler);
+            if (!TryInitializePreviewHandler(previewHandler, fileInfo, out previewStream))
+            {
+                return false;
+            }
 
-            return false;
+            var rect = new RECT { left = 0, top = 0, right = (int)ActualWidth, bottom = (int)ActualHeight };
+
+            if (previewHandler.SetWindow(new HWND(Handle), rect).Failed || previewHandler.DoPreview().Failed)
+            {
+                return false;
+            }
+
+            UnloadPreviewHandler();
+
+            _previewHandler = previewHandler;
+            _previewStream = previewStream;
+
+            keepHandler = true;
+
+            return true;
         }
-
-        var rect = new RECT { left = 0, top = 0, right = (int)ActualWidth, bottom = (int)ActualHeight };
-
-        previewHandler.SetWindow(new HWND(Handle), rect);
-        previewHandler.DoPreview();
-
-        if (_previewHandler is not null)
+        finally
         {
-            UnloadPreviewHandler(_previewHandler);
+            if (!keepHandler)
+            {
+                UnloadPreviewHandler(previewHandler, previewStream);
+            }
         }
-
-        _previewHandler = previewHandler;
-
-        return true;
     }
 
     // ReSharper disable once InconsistentNaming
@@ -122,8 +160,10 @@ public class ShellFileControl : HwndHost
         return previewHandler is not null;
     }
 
-    private static bool TryInitializePreviewHandler(IPreviewHandler previewHandler, FileInfo fileInfo)
+    internal static bool TryInitializePreviewHandler(IPreviewHandler previewHandler, FileInfo fileInfo, out Stream? previewStream)
     {
+        previewStream = null;
+
         switch (previewHandler)
         {
             // ReSharper disable once SuspiciousTypeConversion.Global
@@ -134,36 +174,54 @@ public class ShellFileControl : HwndHost
             // ReSharper disable once SuspiciousTypeConversion.Global
             case IInitializeWithItem initializeWithItem:
             {
-                if (PInvoke.SHCreateItemFromParsingName(fileInfo.FullName, null, out IShellItem shellItem).Failed)
+                var hr = PInvoke.SHCreateItemFromParsingName(fileInfo.FullName, null, out IShellItem shellItem);
+
+                using var shellItemScope = new ComScope(shellItem);
+
+                if (hr.Failed || shellItem is null)
                 {
                     return false;
                 }
 
-                try
-                {
-                    return initializeWithItem.Initialize(shellItem, 0).Succeeded;
-                }
-                finally
-                {
-                    Marshal.ReleaseComObject(shellItem);
-                }
+                return initializeWithItem.Initialize(shellItem, 0).Succeeded;
             }
             // ReSharper disable once SuspiciousTypeConversion.Global
             case IInitializeWithStream initializeWithStream:
             {
-                using var fileStream = fileInfo.OpenReadNoLock();
+                previewStream = fileInfo.OpenReadNoLock();
 
-                return initializeWithStream.Initialize(new ComInteropStream(fileStream), 0).Succeeded;
+                return initializeWithStream.Initialize(new ComInteropStream(previewStream), 0).Succeeded;
             }
             default:
                 return false;
         }
     }
 
-    private static void UnloadPreviewHandler(IPreviewHandler previewHandler)
+    private void UnloadPreviewHandler()
     {
-        previewHandler.Unload();
+        var previewHandler = _previewHandler;
+        var previewStream = _previewStream;
 
-        Marshal.FinalReleaseComObject(previewHandler);
+        _previewHandler = null;
+        _previewStream = null;
+
+        if (previewHandler is not null)
+        {
+            UnloadPreviewHandler(previewHandler, previewStream);
+        }
+    }
+
+    internal static void UnloadPreviewHandler(IPreviewHandler previewHandler, Stream? previewStream)
+    {
+        try
+        {
+            using var handlerScope = new ComScope(previewHandler);
+
+            previewHandler.Unload();
+        }
+        finally
+        {
+            previewStream?.Dispose();
+        }
     }
 }

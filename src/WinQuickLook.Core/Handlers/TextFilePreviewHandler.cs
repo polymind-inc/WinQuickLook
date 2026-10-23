@@ -1,13 +1,16 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Media;
 
 using ICSharpCode.AvalonEdit;
 
 using Windows.Win32;
 using Windows.Win32.Globalization;
+using Windows.Win32.System.Com;
 
 using WinQuickLook.Extensions;
+using WinQuickLook.Interop;
 
 namespace WinQuickLook.Handlers;
 
@@ -17,21 +20,36 @@ public class TextFilePreviewHandler : FilePreviewHandler
 
     protected override bool TryCreateViewer(FileInfo fileInfo, out HandlerResult? handlerResult)
     {
-        using var fileStream = fileInfo.OpenReadNoLock();
-
         // ReSharper disable once SuspiciousTypeConversion.Global
         var multiLanguage = (IMultiLanguage2)new CMultiLanguage();
 
+        Encoding encoding;
+
         try
         {
-            var pnScores = 1;
+            var hr = PInvoke.SHCreateStreamOnFileEx(fileInfo.FullName, (uint)(STGM.STGM_READ | STGM.STGM_SHARE_DENY_NONE), 0, false, null, out var nativeStream);
 
-            if (multiLanguage.DetectCodepageInIStream(0, 0, new ComInteropStream(fileStream), out _, ref pnScores).Failed)
+            using var streamScope = new ComScope(nativeStream);
+
+            if (hr.Failed || nativeStream is null)
             {
                 handlerResult = default;
 
                 return false;
             }
+
+            var pnScores = 1;
+
+            if (multiLanguage.DetectCodepageInIStream(0, 0, nativeStream, out var encodingInfo, ref pnScores).Failed || pnScores == 0)
+            {
+                handlerResult = default;
+
+                return false;
+            }
+
+            var codePage = (int)encodingInfo.nCodePage;
+
+            encoding = CodePagesEncodingProvider.Instance.GetEncoding(codePage) ?? Encoding.GetEncoding(codePage);
         }
         catch
         {
@@ -44,6 +62,9 @@ public class TextFilePreviewHandler : FilePreviewHandler
             Marshal.ReleaseComObject(multiLanguage);
         }
 
+        using var fileStream = fileInfo.OpenReadNoLock();
+        using var reader = new StreamReader(fileStream, encoding, detectEncodingFromByteOrderMarks: true);
+
         var textEditor = new TextEditor();
 
         using (textEditor.Initialize())
@@ -53,7 +74,9 @@ public class TextFilePreviewHandler : FilePreviewHandler
             textEditor.IsReadOnly = true;
             textEditor.ShowLineNumbers = true;
 
-            textEditor.Load(fileInfo.OpenReadNoLock());
+            textEditor.Text = reader.ReadToEnd();
+            textEditor.Encoding = reader.CurrentEncoding;
+            textEditor.IsModified = false;
         }
 
         handlerResult = new HandlerResult { Content = textEditor };

@@ -22,9 +22,14 @@ public class ComInteropStream : IStream
     {
         var buffer = new Span<byte>(pv, (int)cb);
 
-        *pcbRead = (uint)_baseStream.Read(buffer);
+        var bytesRead = (uint)_baseStream.ReadAtLeast(buffer, buffer.Length, throwOnEndOfStream: false);
 
-        return new HRESULT();
+        if (pcbRead is not null)
+        {
+            *pcbRead = bytesRead;
+        }
+
+        return new HRESULT(bytesRead == cb ? 0 : 1);
     }
 
     public unsafe HRESULT Write(void* pv, uint cb, uint* pcbWritten)
