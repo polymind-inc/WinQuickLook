@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 using WinQuickLook.Handlers;
 
@@ -9,14 +8,19 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class SvgFilePreviewHandlerTests
 {
-    [Fact]
-    public void TryCreateViewer_SupportedSvgExtension_ThrowsNotImplementedException()
+    [Theory]
+    [InlineData("test.svg")]
+    [InlineData("test.svgz")]
+    public void TryCreateViewer_UnimplementedSvgExtension_ReturnsFalse(string fileName)
     {
-        var fileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), "test.svg"));
+        var fileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), fileName));
 
         var handler = new SvgFilePreviewHandler();
 
-        Assert.Throws<NotImplementedException>(() => handler.TryCreateViewer(fileInfo, out _));
+        var actual = handler.TryCreateViewer(fileInfo, out var handlerResult);
+
+        Assert.False(actual);
+        Assert.Null(handlerResult);
     }
 
     [Fact]

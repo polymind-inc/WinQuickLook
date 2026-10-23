@@ -142,13 +142,13 @@ public class ShellExplorerProvider
         return info.flags != 0 || info.hwndCaret != nint.Zero;
     }
 
-    private static bool IsDesktopWindow(HWND hwnd)
+    internal static bool IsDesktopWindow(HWND hwnd)
     {
         Span<char> classNameBuf = new char[64];
 
-        PInvoke.GetClassName(hwnd, classNameBuf);
+        var classNameLength = PInvoke.GetClassName(hwnd, classNameBuf);
 
-        var className = new string(classNameBuf);
+        var className = new string(classNameBuf[..classNameLength]);
 
         if (className != "Progman" && className != "WorkerW")
         {

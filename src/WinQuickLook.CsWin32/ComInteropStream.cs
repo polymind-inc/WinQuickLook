@@ -22,7 +22,12 @@ public class ComInteropStream : IStream
     {
         var buffer = new Span<byte>(pv, (int)cb);
 
-        *pcbRead = (uint)_baseStream.Read(buffer);
+        var bytesRead = (uint)_baseStream.Read(buffer);
+
+        if (pcbRead is not null)
+        {
+            *pcbRead = bytesRead;
+        }
 
         return new HRESULT();
     }
