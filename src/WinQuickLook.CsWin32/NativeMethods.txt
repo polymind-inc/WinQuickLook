@@ -41,6 +41,8 @@ GetAsyncKeyState
 MonitorFromWindow
 GetMonitorInfo
 SetWindowPos
+HWND_TOPMOST
+HWND_NOTOPMOST
 
 // shell32
 SHCreateItemFromParsingName

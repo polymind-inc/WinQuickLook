@@ -31,6 +31,7 @@ public sealed class PreviewWindow : Component<PreviewWindowProps>
         var item = Props.Content.FileSystemInfo;
         var file = item as FileInfo;
         var (error, setError) = UseState<string?>(null);
+        UseEffect(() => { setError(null); }, Props.PreviewKey);
         var (width, _) = UseWindowSize();
         var applications = UseMemo(() =>
         {

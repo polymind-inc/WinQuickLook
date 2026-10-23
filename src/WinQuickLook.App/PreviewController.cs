@@ -26,15 +26,17 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
 {
     private readonly IFileSystemPreviewHandler[] _handlers = previewHandlers.OrderByDescending(handler => handler.PriorityClass).ToArray();
     private ReactorWindow? _window;
+    private HWND _sourceWindow;
 
     public void OpenPreview(FileSystemInfo item)
     {
+        var sourceWindow = PInvoke.GetForegroundWindow();
         if (!_handlers.TryCreateViewer(item, out var result))
         {
             return;
         }
 
-        var monitor = PInvoke.MonitorFromWindow(PInvoke.GetForegroundWindow(), MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
+        var monitor = PInvoke.MonitorFromWindow(sourceWindow, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
         var info = new MONITORINFO { cbSize = (uint)Marshal.SizeOf<MONITORINFO>() };
         PInvoke.GetMonitorInfo(monitor, ref info);
         PInvoke.GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpi, out _);
@@ -65,6 +67,7 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
             Icon = WindowIcon.FromPath(Path.Combine(AppContext.BaseDirectory, "Icon.ico"))
         };
         var visible = _window?.IsVisible == true;
+        _sourceWindow = sourceWindow;
         if (_window is null)
         {
             _window = ReactorApp.OpenWindow(spec, _ => Component<PreviewWindow, PreviewWindowProps>(props));
@@ -89,17 +92,27 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
                 SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
             _window.AppWindow.Show(false);
         }
+
+        // Show(false) preserves Explorer focus but can leave the preview behind it.
+        // Briefly make it topmost, then restore normal stacking without taking focus.
+        var previewHwnd = new HWND(WinRT.Interop.WindowNative.GetWindowHandle(_window.NativeWindow));
+        PInvoke.SetWindowPos(previewHwnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
+            SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE);
+        PInvoke.SetWindowPos(previewHwnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,
+            SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE);
     }
 
     public void ClosePreview()
     {
         _window?.Hide();
         _window?.Mount(_ => Empty());
+        _sourceWindow = default;
     }
 
     public void ClosePreviewIfActive()
     {
-        if (_window?.IsActive == true)
+        if (_window?.IsVisible == true && (_window.IsActive ||
+            _sourceWindow != nint.Zero && PInvoke.GetForegroundWindow() == _sourceWindow))
         {
             ClosePreview();
         }
@@ -107,21 +120,14 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
 
     private void OpenWithAssociation(FileInfo file, ShellAssociationProvider.Entry entry)
     {
-        try
+        if (entry.IsDefault)
         {
-            if (entry.IsDefault)
-            {
-                Process.Start(new ProcessStartInfo(file.FullName) { UseShellExecute = true });
-            }
-            else
-            {
-                associations.Invoke(entry.Name, file);
-            }
-            ClosePreview();
+            Process.Start(new ProcessStartInfo(file.FullName) { UseShellExecute = true });
         }
-        catch (Exception exception)
+        else
         {
-            Debug.WriteLine(exception);
+            associations.Invoke(entry.Name, file);
         }
+        ClosePreview();
     }
 }
