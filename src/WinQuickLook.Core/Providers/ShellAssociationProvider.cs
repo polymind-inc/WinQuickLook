@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 using Windows.Win32;
+using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 using WinQuickLook.Extensions;
+using WinQuickLook.Interop;
 
 namespace WinQuickLook.Providers;
 
@@ -27,133 +28,147 @@ public class ShellAssociationProvider
 
     public bool TryGetDefault(FileInfo fileInfo, [NotNullWhen(true)] out Entry? entry)
     {
+        entry = null;
         var pcchOut = 0u;
+        var hr = PInvoke.AssocQueryString(ASSOCF.ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR.ASSOCSTR_FRIENDLYAPPNAME, fileInfo.Extension, null, Span<char>.Empty, ref pcchOut);
 
-        PInvoke.AssocQueryString(ASSOCF.ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR.ASSOCSTR_FRIENDLYAPPNAME, fileInfo.Extension, null, Span<char>.Empty, ref pcchOut);
-
-        if (pcchOut == 0)
+        if (hr.Failed || pcchOut == 0)
         {
-            entry = default;
-
             return false;
         }
 
-        Span<char> pszOut = stackalloc char[(int)pcchOut];
+        Span<char> pszOut = new char[checked((int)pcchOut)];
+        hr = PInvoke.AssocQueryString(ASSOCF.ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR.ASSOCSTR_FRIENDLYAPPNAME, fileInfo.Extension, null, pszOut, ref pcchOut);
 
-        PInvoke.AssocQueryString(ASSOCF.ASSOCF_INIT_IGNOREUNKNOWN, ASSOCSTR.ASSOCSTR_FRIENDLYAPPNAME, fileInfo.Extension, null, pszOut, ref pcchOut);
+        if (hr.Value != 0 || pcchOut == 0)
+        {
+            return false;
+        }
 
-        entry = new Entry { Name = new string(pszOut), IsDefault = true };
+        entry = new Entry { Name = new string(pszOut[..(int)(pcchOut - 1)]), IsDefault = true };
 
         return true;
     }
 
     public IReadOnlyList<Entry> GetRecommends(FileInfo fileInfo)
     {
-        if (PInvoke.SHAssocEnumHandlers(fileInfo.Extension, ASSOC_FILTER.ASSOC_FILTER_RECOMMENDED, out var enumAssocHandlers).Failed)
+        var hr = PInvoke.SHAssocEnumHandlers(fileInfo.Extension, ASSOC_FILTER.ASSOC_FILTER_RECOMMENDED, out var enumerator);
+
+        using var enumeratorScope = new ComScope(enumerator);
+
+        return hr.Succeeded && enumerator is not null ? GetRecommends(enumerator) : [];
+    }
+
+    internal static IReadOnlyList<Entry> GetRecommends(IEnumAssocHandlers enumerator)
+    {
+        var recommends = new List<Entry>();
+
+        foreach (var handler in EnumerateHandlers(enumerator))
         {
-            return [];
-        }
+            var hr = handler.GetUIName(out var namePointer);
+            var name = namePointer.ToStringAndFree();
 
-        try
-        {
-            var recommends = new List<Entry>();
-
-            var assocHandlers = new IAssocHandler[8];
-
-            while (enumAssocHandlers.Next(assocHandlers, out var fetched).Succeeded)
+            if (hr.Failed || name is null)
             {
-                if (fetched == 0)
-                {
-                    break;
-                }
-
-                for (var i = 0; i < fetched; i++)
-                {
-                    var assocHandler = assocHandlers[i];
-
-                    try
-                    {
-                        assocHandler.GetUIName(out var pUiName);
-                        assocHandler.GetIconLocation(out var pIconLocation, out var iconIndex);
-
-                        var iconLocation = pIconLocation.ToString();
-
-                        var icon = GetIconFromLocation(iconLocation, iconIndex);
-
-                        recommends.Add(new Entry
-                        {
-                            Name = pUiName.ToString()!,
-                            IsDefault = false,
-                            Icon = icon
-                        });
-                    }
-                    finally
-                    {
-                        Marshal.ReleaseComObject(assocHandler);
-                    }
-                }
+                continue;
             }
 
-            return recommends;
+            hr = handler.GetIconLocation(out var iconPointer, out var iconIndex);
+            var iconLocation = iconPointer.ToStringAndFree();
+
+            recommends.Add(new Entry
+            {
+                Name = name,
+                IsDefault = false,
+                Icon = hr.Succeeded ? GetIconFromLocation(iconLocation, iconIndex) : null
+            });
         }
-        finally
-        {
-            Marshal.ReleaseComObject(enumAssocHandlers);
-        }
+
+        return recommends;
     }
 
     public void Invoke(string appName, FileInfo fileInfo)
     {
-        if (PInvoke.SHAssocEnumHandlers(fileInfo.Extension, ASSOC_FILTER.ASSOC_FILTER_RECOMMENDED, out var enumAssocHandlers).Failed)
+        var hr = PInvoke.SHAssocEnumHandlers(fileInfo.Extension, ASSOC_FILTER.ASSOC_FILTER_RECOMMENDED, out var enumerator);
+
+        using var enumeratorScope = new ComScope(enumerator);
+
+        if (hr.Failed || enumerator is null)
         {
             return;
         }
 
-        try
+        foreach (var handler in EnumerateHandlers(enumerator))
         {
-            var assocHandlers = new IAssocHandler[8];
+            hr = handler.GetUIName(out var namePointer);
+            var name = namePointer.ToStringAndFree();
 
-            while (enumAssocHandlers.Next(assocHandlers, out var fetched).Succeeded)
+            if (hr.Failed || appName != name)
             {
-                if (fetched == 0)
+                continue;
+            }
+
+            hr = PInvoke.SHCreateItemFromParsingName(fileInfo.FullName, null, out IShellItem shellItem);
+
+            using var itemScope = new ComScope(shellItem);
+
+            if (hr.Failed || shellItem is null)
+            {
+                return;
+            }
+
+            hr = shellItem.BindToHandler<Windows.Win32.System.Com.IDataObject>(null, PInvoke.BHID_DataObject, out var dataObject);
+
+            using var dataObjectScope = new ComScope(dataObject);
+
+            if (hr.Succeeded && dataObject is not null)
+            {
+                handler.Invoke(dataObject);
+            }
+
+            return;
+        }
+    }
+
+    internal static IEnumerable<IAssocHandler> EnumerateHandlers(IEnumAssocHandlers enumerator)
+    {
+        var handlers = new IAssocHandler[8];
+
+        while (true)
+        {
+            HRESULT hr;
+
+            try
+            {
+                hr = enumerator.Next(handlers, out var fetched);
+
+                if (hr.Failed || fetched == 0)
                 {
-                    break;
+                    yield break;
                 }
 
-                for (var i = 0; i < fetched; i++)
+                for (var i = 0; i < Math.Min(fetched, (uint)handlers.Length); i++)
                 {
-                    var assocHandler = assocHandlers[i];
-
-                    try
+                    if (handlers[i] is { } handler)
                     {
-                        assocHandler.GetUIName(out var pUiName);
-
-                        if (appName != pUiName.ToString())
-                        {
-                            continue;
-                        }
-
-                        PInvoke.SHCreateItemFromParsingName(fileInfo.FullName, null, out IShellItem shellItem);
-
-                        shellItem.BindToHandler<Windows.Win32.System.Com.IDataObject>(null, PInvoke.BHID_DataObject, out var dataObject);
-
-                        assocHandler.Invoke(dataObject);
-
-                        Marshal.ReleaseComObject(dataObject);
-                        Marshal.ReleaseComObject(shellItem);
-
-                        return;
-                    }
-                    finally
-                    {
-                        Marshal.ReleaseComObject(assocHandler);
+                        yield return handler;
                     }
                 }
             }
-        }
-        finally
-        {
-            Marshal.ReleaseComObject(enumAssocHandlers);
+            finally
+            {
+                foreach (var handler in handlers)
+                {
+                    using var handlerScope = new ComScope(handler);
+                }
+
+                Array.Clear(handlers);
+            }
+
+            if (hr.Value != 0)
+            {
+                yield break;
+            }
         }
     }
 

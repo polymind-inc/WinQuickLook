@@ -53,7 +53,7 @@ public partial class MainWindow
         ApplyRequestSize(handlerResult.RequestSize, monitorContext.Monitor);
 
         Title = fileSystemInfo.Name;
-        AppContentPresenter.Content = handlerResult.Content;
+        ReplacePreviewContent(handlerResult.Content);
 
         if (fileSystemInfo is FileInfo fileInfo)
         {
@@ -114,7 +114,16 @@ public partial class MainWindow
     {
         Hide();
 
-        AppContentPresenter.Content = null;
+        ReplacePreviewContent(null);
+    }
+
+    private void ReplacePreviewContent(FrameworkElement? content)
+    {
+        var previousContent = AppContentPresenter.Content;
+
+        AppContentPresenter.Content = content;
+
+        (previousContent as IDisposable)?.Dispose();
     }
 
     public void ClosePreviewIfActive()

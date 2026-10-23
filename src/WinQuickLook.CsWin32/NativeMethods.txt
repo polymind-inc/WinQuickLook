@@ -44,6 +44,7 @@ SetWindowPos
 
 // shell32
 SHCreateItemFromParsingName
+SHCreateItemWithParent
 SHAssocEnumHandlers
 SHGetFileInfo
 ExtractIconEx
@@ -56,6 +57,7 @@ CoCreateInstance
 StrRetToBuf
 SHLoadIndirectString
 AssocQueryString
+SHCreateStreamOnFileEx
 
 // shcore
 GetDpiForMonitor
@@ -98,3 +100,4 @@ ShellWindowTypeConstants
 ShellWindowFindWindowOptions
 
 BHID_DataObject
+STGM

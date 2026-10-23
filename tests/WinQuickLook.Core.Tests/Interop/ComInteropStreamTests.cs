@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 using Windows.Win32;
 
@@ -31,8 +32,9 @@ public class ComInteropStreamTests
         byte* buffer = stackalloc byte[4];
         uint bytesRead;
 
-        adapter.Read(buffer, 4, &bytesRead);
+        var hr = adapter.Read(buffer, 4, &bytesRead);
 
+        Assert.Equal(1, hr.Value);
         Assert.Equal(1u, bytesRead);
         Assert.Equal(1, buffer[0]);
     }
@@ -47,5 +49,39 @@ public class ComInteropStreamTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(0, stream.Position);
+    }
+
+    [Fact]
+    public unsafe void Read_AtEndOfStream_ReturnsFalse()
+    {
+        using var stream = new MemoryStream();
+        var adapter = new ComInteropStream(stream);
+        byte value;
+        uint bytesRead = 123;
+
+        var hr = adapter.Read(&value, 1, &bytesRead);
+
+        Assert.Equal(1, hr.Value);
+        Assert.Equal(0u, bytesRead);
+    }
+
+    [Fact]
+    public unsafe void Read_StreamReturnsPartialData_FillsRequestedBuffer()
+    {
+        using var stream = new PartialReadStream([1, 2, 3]);
+        var adapter = new ComInteropStream(stream);
+        byte* buffer = stackalloc byte[3];
+        uint bytesRead;
+
+        var hr = adapter.Read(buffer, 3, &bytesRead);
+
+        Assert.Equal(0, hr.Value);
+        Assert.Equal(3u, bytesRead);
+        Assert.Equal(new byte[] { 1, 2, 3 }, new ReadOnlySpan<byte>(buffer, 3).ToArray());
+    }
+
+    private sealed class PartialReadStream(byte[] bytes) : MemoryStream(bytes)
+    {
+        public override int Read(Span<byte> buffer) => base.Read(buffer[..Math.Min(buffer.Length, 1)]);
     }
 }

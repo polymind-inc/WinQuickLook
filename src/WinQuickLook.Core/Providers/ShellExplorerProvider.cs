@@ -7,6 +7,9 @@ using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.WindowsAndMessaging;
 
+using WinQuickLook.Extensions;
+using WinQuickLook.Interop;
+
 using IServiceProvider = Windows.Win32.System.Com.IServiceProvider;
 
 namespace WinQuickLook.Providers;
@@ -22,139 +25,157 @@ public class ShellExplorerProvider
             return null;
         }
 
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        var shellWindows = (IShellWindows)new ShellWindows();
-
-        var fileSystemInfo = default(FileSystemInfo);
-
-        if (IsDesktopWindow(foregroundHwnd))
+        try
         {
-            var pvarLoc = new object();
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            var shellWindows = (IShellWindows)new ShellWindows();
 
-            shellWindows.FindWindowSW(pvarLoc, pvarLoc, (int)ShellWindowTypeConstants.SWC_DESKTOP, out var desktopHwnd, (int)ShellWindowFindWindowOptions.SWFO_NEEDDISPATCH, out IWebBrowserApp webBrowserApp);
+            using var shellWindowsScope = new ComScope(shellWindows);
 
-            if (!IsCaretActive(desktopHwnd))
-            {
-                fileSystemInfo = GetSelectedItemCore(webBrowserApp);
-            }
-
-            Marshal.ReleaseComObject(webBrowserApp);
+            return GetSelectedItem(shellWindows, foregroundHwnd);
         }
-        else
+        catch (COMException)
         {
-            shellWindows.get_Count(out var count);
-
-            for (var i = 0; i < count; i++)
-            {
-                shellWindows.Item(i, out IWebBrowserApp webBrowserApp);
-
-                try
-                {
-                    webBrowserApp.get_HWND(out var hwnd);
-
-                    if (hwnd != foregroundHwnd || IsCaretActive(hwnd))
-                    {
-                        continue;
-                    }
-
-                    fileSystemInfo = GetSelectedItemCore(webBrowserApp);
-
-                    break;
-                }
-                finally
-                {
-                    Marshal.ReleaseComObject(webBrowserApp);
-                }
-            }
+            return null;
         }
-
-        Marshal.ReleaseComObject(shellWindows);
-
-        return fileSystemInfo;
     }
 
-    private FileSystemInfo? GetSelectedItemCore(IWebBrowserApp webBrowserApp)
+    internal static FileSystemInfo? GetSelectedItem(IShellWindows shellWindows, HWND foregroundHwnd)
     {
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        var serviceProvider = (IServiceProvider)webBrowserApp;
+        if (IsDesktopWindow(foregroundHwnd))
+        {
+            object empty = null!;
+            var hr = shellWindows.FindWindowSW(empty, empty, (int)ShellWindowTypeConstants.SWC_DESKTOP, out var desktopHwnd, (int)ShellWindowFindWindowOptions.SWFO_NEEDDISPATCH, out IWebBrowserApp? webBrowserApp);
 
-        serviceProvider.QueryService(PInvoke.SID_STopLevelBrowser, out IShellBrowser shellBrowser);
+            using var browserScope = new ComScope(webBrowserApp);
 
-        shellBrowser.QueryActiveShellView(out var shellView);
+            return hr.Value == 0 && webBrowserApp is not null && !IsCaretActive(desktopHwnd) ? GetSelectedItemCore(webBrowserApp) : null;
+        }
 
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        var folderView = (IFolderView)shellView;
+        if (shellWindows.get_Count(out var count).Failed)
+        {
+            return null;
+        }
 
-        folderView.GetFocusedItem(out var index);
-        folderView.Item(index, out nint ppidl);
+        for (var i = 0; i < count; i++)
+        {
+            var hr = shellWindows.Item(i, out IWebBrowserApp? webBrowserApp);
 
-        folderView.GetFolder(out IPersistFolder2 persistFolder2);
+            using var browserScope = new ComScope(webBrowserApp);
 
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        var shellFolder = (IShellFolder)persistFolder2;
+            if (hr.Value != 0 || webBrowserApp is null || webBrowserApp.get_HWND(out var hwnd).Failed)
+            {
+                continue;
+            }
 
-        shellFolder.GetDisplayNameOf(ppidl, SHGDNF.SHGDN_FORPARSING, out var pName);
+            if (hwnd == foregroundHwnd && !IsCaretActive(hwnd))
+            {
+                return GetSelectedItemCore(webBrowserApp);
+            }
+        }
 
-        Span<char> pszBuf = new char[PInvoke.MAX_PATH];
+        return null;
+    }
 
-        PInvoke.StrRetToBuf(ref pName, ppidl, pszBuf);
+    private static FileSystemInfo? GetSelectedItemCore(IWebBrowserApp webBrowserApp)
+    {
+        // A cast borrows the existing RCW; only the acquired shellBrowser is owned here.
+        if (webBrowserApp is not IServiceProvider serviceProvider)
+        {
+            return null;
+        }
+
+        var hr = serviceProvider.QueryService(PInvoke.SID_STopLevelBrowser, out IShellBrowser shellBrowser);
+
+        using var browserScope = new ComScope(shellBrowser);
+
+        return hr.Succeeded && shellBrowser is not null ? GetSelectedItemCore(shellBrowser) : null;
+    }
+
+    internal static FileSystemInfo? GetSelectedItemCore(IShellBrowser shellBrowser)
+    {
+        var hr = shellBrowser.QueryActiveShellView(out var shellView);
+
+        using var viewScope = new ComScope(shellView);
+
+        return hr.Succeeded && shellView is IFolderView folderView ? GetSelectedItem(folderView) : null;
+    }
+
+    internal static FileSystemInfo? GetSelectedItem(IFolderView folderView)
+    {
+        if (folderView.GetFocusedItem(out var index).Value != 0 || index < 0)
+        {
+            return null;
+        }
+
+        var itemHr = folderView.Item(index, out nint pidl);
 
         try
         {
-            var selectedPath = new string(pszBuf.TrimEnd('\0'));
-
-            if (File.Exists(selectedPath))
+            if (itemHr.Failed || pidl == 0)
             {
-                return new FileInfo(selectedPath);
+                return null;
             }
 
-            if (Directory.Exists(selectedPath))
+            var folderHr = folderView.GetFolder(out IShellFolder shellFolder);
+
+            using var folderScope = new ComScope(shellFolder);
+
+            if (folderHr.Failed || shellFolder is null)
             {
-                return new DirectoryInfo(selectedPath);
+                return null;
             }
 
-            return null;
+            var hr = PInvoke.SHCreateItemWithParent(shellFolder, pidl, out var shellItem);
+
+            using var itemScope = new ComScope(shellItem);
+
+            return hr.Succeeded && shellItem is not null ? GetFileSystemInfo(shellItem) : null;
         }
         finally
         {
-            Marshal.FreeCoTaskMem(ppidl);
-
-            Marshal.ReleaseComObject(shellFolder);
-            Marshal.ReleaseComObject(persistFolder2);
-            Marshal.ReleaseComObject(folderView);
-            Marshal.ReleaseComObject(shellView);
-            Marshal.ReleaseComObject(shellBrowser);
-            Marshal.ReleaseComObject(serviceProvider);
+            Marshal.FreeCoTaskMem(pidl);
         }
+    }
+
+    internal static FileSystemInfo? GetFileSystemInfo(IShellItem shellItem)
+    {
+        var hr = shellItem.GetDisplayName(SIGDN.SIGDN_FILESYSPATH, out var name);
+        var path = name.ToStringAndFree();
+
+        if (hr.Failed || path is null)
+        {
+            return null;
+        }
+
+        if (File.Exists(path))
+        {
+            return new FileInfo(path);
+        }
+
+        return Directory.Exists(path) ? new DirectoryInfo(path) : null;
     }
 
     private static bool IsCaretActive(HWND hwnd)
     {
         var threadId = PInvoke.GetWindowThreadProcessId(hwnd);
 
-        var info = new GUITHREADINFO
+        if (threadId == 0)
         {
-            cbSize = (uint)Marshal.SizeOf<GUITHREADINFO>()
-        };
+            return true;
+        }
 
-        PInvoke.GetGUIThreadInfo(threadId, ref info);
+        var info = new GUITHREADINFO { cbSize = (uint)Marshal.SizeOf<GUITHREADINFO>() };
 
-        return info.flags != 0 || info.hwndCaret != nint.Zero;
+        return !PInvoke.GetGUIThreadInfo(threadId, ref info) || info.flags != 0 || info.hwndCaret != nint.Zero;
     }
 
     internal static bool IsDesktopWindow(HWND hwnd)
     {
         Span<char> classNameBuf = new char[64];
-
         var classNameLength = PInvoke.GetClassName(hwnd, classNameBuf);
-
         var className = new string(classNameBuf[..classNameLength]);
 
-        if (className != "Progman" && className != "WorkerW")
-        {
-            return false;
-        }
-
-        return PInvoke.FindWindowEx(hwnd, new HWND(), "SHELLDLL_DefView", null) != nint.Zero;
+        return (className == "Progman" || className == "WorkerW") && PInvoke.FindWindowEx(hwnd, default, "SHELLDLL_DefView", null) != nint.Zero;
     }
 }

@@ -1,26 +1,34 @@
-﻿using Windows.Win32.Foundation;
+﻿using System.Runtime.InteropServices;
+
+using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 
 namespace Windows.Win32;
 
 public static class FriendlyOverloadExtensions
 {
+    public static unsafe void FreeCoTaskMem(this PWSTR value) => Marshal.FreeCoTaskMem((nint)value.Value);
+
     extension(IFolderView folderView)
     {
-        public unsafe void Item(int iItemIndex, out nint ppidl)
+        public unsafe HRESULT Item(int iItemIndex, out nint ppidl)
         {
+            ppidl = default;
+
             fixed (nint* ppidlLocal = &ppidl)
             {
-                folderView.Item(iItemIndex, (UI.Shell.Common.ITEMIDLIST**)ppidlLocal);
+                return folderView.Item(iItemIndex, (UI.Shell.Common.ITEMIDLIST**)ppidlLocal);
             }
         }
     }
 
-    public static unsafe void GetDisplayNameOf(this IShellFolder folderView, in nint pidl, SHGDNF uFlags, out UI.Shell.Common.STRRET pName)
+    public static unsafe HRESULT GetDisplayNameOf(this IShellFolder folderView, in nint pidl, SHGDNF uFlags, out UI.Shell.Common.STRRET pName)
     {
+        pName = default;
+
         fixed (UI.Shell.Common.STRRET* pNameLocal = &pName)
         {
-            folderView.GetDisplayNameOf((UI.Shell.Common.ITEMIDLIST*)pidl, uFlags, pNameLocal);
+            return folderView.GetDisplayNameOf((UI.Shell.Common.ITEMIDLIST*)pidl, uFlags, pNameLocal);
         }
     }
 
@@ -42,22 +50,41 @@ public static class FriendlyOverloadExtensions
 
     extension(IShellWindows shellWindows)
     {
-        public HRESULT Item<T>(object index, out T folder)
+        public HRESULT Item<T>(object index, out T? folder) where T : class
         {
             var hr = shellWindows.Item(index, out var o);
-            folder = (T)o;
-            return hr;
+
+            return GetInterface(hr, o, out folder);
         }
 
         // ReSharper disable once InconsistentNaming
-        public unsafe HRESULT FindWindowSW<T>(in object pvarLoc, in object pvarLocRoot, int swClass, out HWND phwnd, int swfwOptions, out T ppdispOut)
+        public unsafe HRESULT FindWindowSW<T>(in object pvarLoc, in object pvarLocRoot, int swClass, out HWND phwnd, int swfwOptions, out T? ppdispOut) where T : class
         {
-            fixed (HWND* phwndLocal = &phwnd)
-            {
-                var hr = shellWindows.FindWindowSW(pvarLoc, pvarLocRoot, swClass, (int*)phwndLocal, swfwOptions, out var o);
-                ppdispOut = (T)o;
-                return hr;
-            }
+            var nativeHwnd = 0;
+            var hr = shellWindows.FindWindowSW(pvarLoc, pvarLocRoot, swClass, &nativeHwnd, swfwOptions, out var o);
+
+            phwnd = new HWND(nativeHwnd);
+
+            return GetInterface(hr, o, out ppdispOut);
         }
+    }
+
+    private static HRESULT GetInterface<T>(HRESULT hr, object? value, out T? result) where T : class
+    {
+        if (hr.Value == 0 && value is T typedValue)
+        {
+            result = typedValue;
+
+            return hr;
+        }
+
+        if (value is not null && Marshal.IsComObject(value))
+        {
+            Marshal.ReleaseComObject(value);
+        }
+
+        result = null;
+
+        return hr.Value == 0 ? new HRESULT(unchecked((int)0x80004002)) : hr;
     }
 }
