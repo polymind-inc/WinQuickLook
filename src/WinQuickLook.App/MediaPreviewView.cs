@@ -20,6 +20,7 @@ public sealed class MediaPreviewView : Component<MediaPreview>
     public override Element Render()
     {
         var (width, height) = UseWindowSize();
+        var dipScale = UseDpi() / 96.0;
         var compact = width < 520 || height < 560;
         var element = UseRef<Microsoft.UI.Xaml.Controls.MediaPlayerElement?>(null);
         var source = UseMemo(() => MediaSource.CreateFromUri(new Uri(Props.File.FullName)), Props);
@@ -40,18 +41,23 @@ public sealed class MediaPreviewView : Component<MediaPreview>
         var thumbnail = UseMemo(() => Props.IsVideo ? null : new ShellThumbnailProvider().GetImage(Props.File), Props);
         var (error, setError) = UseState<string?>(null);
 
-        var media = MediaPlayerElement().Set(control =>
+        Element media = MediaPlayerElement().Set(control =>
         {
             element.Current = control;
             control.SetMediaPlayer(player);
             control.AreTransportControlsEnabled = true;
+            control.Stretch = Microsoft.UI.Xaml.Media.Stretch.Uniform;
         }).MediaFailed(setError).AutomationName(Props.IsVideo ? "Video preview" : "Audio preview");
+        if (Props.IsVideo && Props.PixelSize is { } size)
+        {
+            media = media.MaxWidth(size.Width / dipScale).MaxHeight(size.Height / dipScale);
+        }
 
         Element artwork = thumbnail is null
             ? Border(TextBlock("\uE8D6").FontFamily("Segoe Fluent Icons").FontSize(56).Foreground(Theme.SecondaryText)
                 .HAlign(HorizontalAlignment.Center).VAlign(VerticalAlignment.Center))
                 .Background(Theme.SubtleFill).CornerRadius(8).WithBorder(Theme.CardStroke)
-            : Component<BitmapPreview, byte[]>(thumbnail);
+            : Component<BitmapPreview, BitmapPreviewProps>(new(thumbnail));
         artwork = Border(artwork).CornerRadius(12).Size(compact ? 160 : 224, compact ? 160 : 224);
 
         var title = VStack(8,

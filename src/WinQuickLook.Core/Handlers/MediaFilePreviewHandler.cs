@@ -70,9 +70,7 @@ public class MediaFilePreviewHandler : FilePreviewHandler
             return false;
         }
 
-        var requestSize = videoSize.FitTo(1200);
-
-        handlerResult = new HandlerResult { Content = new MediaPreview(fileInfo, true), RequestSize = requestSize };
+        handlerResult = new HandlerResult { Content = new MediaPreview(fileInfo, true, videoSize), RequestSize = videoSize };
 
         return true;
     }
@@ -91,16 +89,18 @@ public class MediaFilePreviewHandler : FilePreviewHandler
         return true;
     }
 
-    private static bool TryGetVideoSize(IMFAttributes videoMediaType, out Size size)
+    internal static bool TryGetVideoSize(IMFAttributes videoMediaType, out Size size)
     {
-        if (PInvoke.MFGetAttributeSize(videoMediaType, PInvoke.MF_MT_FRAME_SIZE, out var width, out var height).Failed)
+        if (PInvoke.MFGetAttributeSize(videoMediaType, PInvoke.MF_MT_FRAME_SIZE, out var width, out var height).Failed || width == 0 || height == 0)
         {
             size = default;
 
             return false;
         }
 
-        size = new Size(width, height);
+        size = videoMediaType.GetUINT32(PInvoke.MF_MT_VIDEO_ROTATION, out var rotation).Succeeded && rotation is 90 or 270
+            ? new Size(height, width)
+            : new Size(width, height);
 
         return true;
     }

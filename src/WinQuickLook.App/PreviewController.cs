@@ -8,6 +8,9 @@ using System.Runtime.InteropServices;
 using Microsoft.UI.Reactor;
 using Microsoft.UI.Reactor.Core;
 
+using Windows.Foundation;
+using Windows.Graphics;
+
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
@@ -22,11 +25,12 @@ using static Microsoft.UI.Reactor.Factories;
 
 namespace WinQuickLook.App;
 
-public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> previewHandlers, ShellAssociationProvider associations)
+public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> previewHandlers, ShellAssociationProvider associations) : IDisposable
 {
     private readonly IFileSystemPreviewHandler[] _handlers = previewHandlers.OrderByDescending(handler => handler.PriorityClass).ToArray();
     private ReactorWindow? _window;
     private HWND _sourceWindow;
+    private PreviewWindowAnimator? _animator;
 
     public void OpenPreview(FileSystemInfo item)
     {
@@ -43,10 +47,20 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
         var dipScale = Math.Max(dpi, 96) / 96.0;
         var workWidth = (info.rcWork.right - info.rcWork.left) / dipScale;
         var workHeight = (info.rcWork.bottom - info.rcWork.top) / dipScale;
-        var scale = Math.Min(Math.Min(workWidth, workHeight) * 0.8 / Math.Max(result.RequestSize.Width, result.RequestSize.Height), 1);
-        var width = Math.Max(400, Math.Round(result.RequestSize.Width * scale));
-        var height = Math.Max(400, Math.Round(result.RequestSize.Height * scale)
-            + AppParameters.CaptionHeight + AppParameters.FooterHeight);
+        var pixelSize = result.Content switch
+        {
+            ImagePreview image => (Size?)image.PixelSize,
+            MediaPreview { IsVideo: true } video => video.PixelSize,
+            _ => null
+        };
+        var padding = result.Content is ImagePreview ? AppParameters.ImagePadding * 2 : 0;
+        var minimum = pixelSize is not null ? new Size(360, 180) : new Size(400, 400);
+        var clientSize = PreviewSizing.GetClientSize(pixelSize ?? result.RequestSize,
+            new Size(workWidth, workHeight),
+            new Size(padding, AppParameters.CaptionHeight + AppParameters.FooterHeight + AppParameters.ContentBorderHeight + padding),
+            minimum, pixelSize is not null ? dipScale : 1);
+        var width = clientSize.Width;
+        var height = clientSize.Height;
         var file = item as FileInfo;
         var defaultApp = file is not null && associations.TryGetDefault(file, out var entry) ? entry : null;
         var props = new PreviewWindowProps(Guid.NewGuid().ToString("N"), result.Content, defaultApp, associations, ClosePreview, OpenWithAssociation);
@@ -55,9 +69,10 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
             Title = item.Name,
             Width = width,
             Height = height,
-            MinWidth = 400,
-            MinHeight = 400,
+            MinWidth = Math.Min(minimum.Width, width),
+            MinHeight = Math.Min(minimum.Height, height),
             ActivateOnOpen = false,
+            ExtendsContentIntoTitleBar = true,
             ShowInTaskbar = false,
             ShowInSwitcher = false,
             IsMinimizable = false,
@@ -71,6 +86,7 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
         if (_window is null)
         {
             _window = ReactorApp.OpenWindow(spec, _ => Component<PreviewWindow, PreviewWindowProps>(props));
+            _animator = new PreviewWindowAnimator(_window);
             _window.Closing += (_, e) =>
             {
                 e.Cancel = true;
@@ -83,19 +99,36 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
             _window.Mount(_ => Component<PreviewWindow, PreviewWindowProps>(props));
         }
 
+        var appWindow = _window.AppWindow;
+        var previewHwnd = new HWND(WinRT.Interop.WindowNative.GetWindowHandle(_window.NativeWindow));
+        var sameMonitor = PInvoke.MonitorFromWindow(previewHwnd, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY) == monitor;
+        if (!visible || !sameMonitor)
+        {
+            _animator?.Stop();
+            // Establish the destination DPI before sizing the client area.
+            _window.SetSize(width, height);
+            appWindow.Move(new PointInt32(info.rcWork.left, info.rcWork.top));
+            appWindow.ResizeClient(new SizeInt32((int)Math.Ceiling(width * dipScale), (int)Math.Ceiling(height * dipScale)));
+        }
+
+        var frameWidth = appWindow.Size.Width - appWindow.ClientSize.Width;
+        var frameHeight = appWindow.Size.Height - appWindow.ClientSize.Height;
+        var targetWidth = (int)Math.Ceiling(width * dipScale) + frameWidth;
+        var targetHeight = (int)Math.Ceiling(height * dipScale) + frameHeight;
+        var centerX = visible && sameMonitor ? appWindow.Position.X + appWindow.Size.Width / 2.0
+            : (info.rcWork.left + info.rcWork.right) / 2.0;
+        var centerY = visible && sameMonitor ? appWindow.Position.Y + appWindow.Size.Height / 2.0
+            : (info.rcWork.top + info.rcWork.bottom) / 2.0;
+        var x = Math.Clamp((int)Math.Round(centerX - targetWidth / 2.0), info.rcWork.left, info.rcWork.right - targetWidth);
+        var y = Math.Clamp((int)Math.Round(centerY - targetHeight / 2.0), info.rcWork.top, info.rcWork.bottom - targetHeight);
+        _animator?.Resize(new RectInt32(x, y, targetWidth, targetHeight), visible && sameMonitor);
         if (!visible)
         {
-            var x = info.rcWork.left + ((info.rcWork.right - info.rcWork.left - width * dipScale) / 2);
-            var y = info.rcWork.top + ((info.rcWork.bottom - info.rcWork.top - height * dipScale) / 2);
-            var hwnd = new HWND(WinRT.Interop.WindowNative.GetWindowHandle(_window.NativeWindow));
-            PInvoke.SetWindowPos(hwnd, default, (int)Math.Round(x), (int)Math.Round(y), 0, 0,
-                SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER);
-            _window.AppWindow.Show(false);
+            appWindow.Show(false);
         }
 
         // Show(false) preserves Explorer focus but can leave the preview behind it.
         // Briefly make it topmost, then restore normal stacking without taking focus.
-        var previewHwnd = new HWND(WinRT.Interop.WindowNative.GetWindowHandle(_window.NativeWindow));
         PInvoke.SetWindowPos(previewHwnd, HWND.HWND_TOPMOST, 0, 0, 0, 0,
             SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE);
         PInvoke.SetWindowPos(previewHwnd, HWND.HWND_NOTOPMOST, 0, 0, 0, 0,
@@ -104,6 +137,7 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
 
     public void ClosePreview()
     {
+        _animator?.Stop();
         _window?.Hide();
         _window?.Mount(_ => Empty());
         _sourceWindow = default;
@@ -130,4 +164,6 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
         }
         ClosePreview();
     }
+
+    public void Dispose() => _animator?.Dispose();
 }

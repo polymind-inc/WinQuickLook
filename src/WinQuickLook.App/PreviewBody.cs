@@ -9,6 +9,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 
+using Windows.Foundation;
+
 using WinQuickLook.Handlers;
 using WinQuickLook.Providers;
 
@@ -23,7 +25,8 @@ public sealed class PreviewBody : Component<PreviewContent>
         TextPreview text => Component<BrowserPreview, BrowserPreviewProps>(
             new(PreviewHtml.Source(text.Text, text.Language), null, false)),
         HtmlPreview html => Component<DocumentPreview, HtmlPreview>(html),
-        ImagePreview image => Component<BitmapPreview, byte[]>(image.Data).Margin(16),
+        ImagePreview image => Component<BitmapPreview, BitmapPreviewProps>(new(image.Data, image.PixelSize))
+            .Margin(AppParameters.ImagePadding),
         MediaPreview media => Component<MediaPreviewView, MediaPreview>(media),
         ShellPreview shell => Component<ShellPreviewView, ShellPreview>(shell),
         GenericPreview generic => Component<GenericPreviewView, FileSystemInfo>(generic.FileSystemInfo),
@@ -51,23 +54,29 @@ public sealed class DocumentPreview : Component<HtmlPreview>
     }
 }
 
-public sealed class BitmapPreview : Component<byte[]>
+public sealed record BitmapPreviewProps(byte[] Data, Size? PixelSize = null);
+
+public sealed class BitmapPreview : Component<BitmapPreviewProps>
 {
     public override Element Render()
     {
+        var dipScale = UseDpi() / 96.0;
         var bitmap = UseMemo(() =>
         {
-            using var stream = new MemoryStream(Props);
+            using var stream = new MemoryStream(Props.Data);
             var image = new BitmapImage();
             image.SetSource(stream.AsRandomAccessStream());
             return image;
-        }, Props);
+        }, Props.Data);
 
-        return BitmapImageElement.Image().Set(image =>
+        Element image = BitmapImageElement.Image().Set(image =>
         {
             image.Source = bitmap;
             image.Stretch = Stretch.Uniform;
         }).AutomationName("Image preview");
+        return Props.PixelSize is { } size
+            ? image.MaxWidth(size.Width / dipScale).MaxHeight(size.Height / dipScale)
+            : image;
     }
 }
 
@@ -94,7 +103,7 @@ public sealed class GenericPreviewView : Component<FileSystemInfo>
             ? TextBlock(Props is DirectoryInfo ? "\uE8B7" : "\uE8A5")
                 .FontFamily("Segoe Fluent Icons").FontSize(56).Foreground(Theme.SecondaryText)
                 .HAlign(HorizontalAlignment.Center).VAlign(VerticalAlignment.Center)
-            : Component<BitmapPreview, byte[]>(thumbnail);
+            : Component<BitmapPreview, BitmapPreviewProps>(new(thumbnail));
         artwork = Border(artwork).Size(compact ? 112 : 192, compact ? 112 : 192);
 
         var heading = VStack(8,

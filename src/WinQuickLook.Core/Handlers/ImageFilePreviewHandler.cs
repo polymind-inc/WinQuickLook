@@ -25,8 +25,8 @@ public class ImageFilePreviewHandler : FilePreviewHandler
             stream.CopyTo(buffer);
             handlerResult = new HandlerResult
             {
-                Content = new ImagePreview(fileInfo, buffer.ToArray()),
-                RequestSize = size.FitTo(1200)
+                Content = new ImagePreview(fileInfo, buffer.ToArray(), size),
+                RequestSize = size
             };
             return true;
         }

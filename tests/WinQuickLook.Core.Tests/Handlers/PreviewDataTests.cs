@@ -12,7 +12,7 @@ namespace WinQuickLook.Tests.Handlers;
 public class PreviewDataTests
 {
     [StaFact]
-    public void ImagePreview_PreservesEncodedDataAndFitsRequestedSizeWithoutLockingFile()
+    public void ImagePreview_PreservesEncodedDataAndPixelSizeWithoutLockingFile()
     {
         var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.png");
         try
@@ -25,8 +25,8 @@ public class PreviewDataTests
             var handler = new ImageFilePreviewHandler();
             Assert.True(handler.TryCreateViewer(new FileInfo(path), out var result));
             Assert.NotNull(result);
-            Assert.Equal(1200, result.RequestSize.Width);
-            Assert.Equal(600, result.RequestSize.Height);
+            Assert.Equal(2400, result.RequestSize.Width);
+            Assert.Equal(1200, result.RequestSize.Height);
             Assert.Equal(File.ReadAllBytes(path), Assert.IsType<ImagePreview>(result.Content).Data);
             using var exclusive = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         }

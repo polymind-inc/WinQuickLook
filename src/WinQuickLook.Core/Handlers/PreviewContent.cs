@@ -1,6 +1,8 @@
 ﻿using System.IO;
 using System.Text;
 
+using Windows.Foundation;
+
 namespace WinQuickLook.Handlers;
 
 public abstract record PreviewContent(FileSystemInfo FileSystemInfo);
@@ -9,9 +11,9 @@ public sealed record TextPreview(FileInfo File, string Text, Encoding Encoding, 
 
 public sealed record HtmlPreview(FileInfo File, string Source, string? Html = null) : PreviewContent(File);
 
-public sealed record ImagePreview(FileInfo File, byte[] Data) : PreviewContent(File);
+public sealed record ImagePreview(FileInfo File, byte[] Data, Size PixelSize) : PreviewContent(File);
 
-public sealed record MediaPreview(FileInfo File, bool IsVideo) : PreviewContent(File);
+public sealed record MediaPreview(FileInfo File, bool IsVideo, Size? PixelSize = null) : PreviewContent(File);
 
 public sealed record ShellPreview(FileInfo File) : PreviewContent(File);
 
