@@ -23,7 +23,7 @@ public sealed class PreviewBody : Component<PreviewContent>
         TextPreview text => Component<BrowserPreview, BrowserPreviewProps>(
             new(PreviewHtml.Source(text.Text, text.Language), null, false)),
         HtmlPreview html => Component<DocumentPreview, HtmlPreview>(html),
-        ImagePreview image => Component<BitmapPreview, byte[]>(image.Data).Margin(24),
+        ImagePreview image => Component<BitmapPreview, byte[]>(image.Data).Margin(16),
         MediaPreview media => Component<MediaPreviewView, MediaPreview>(media),
         ShellPreview shell => Component<ShellPreviewView, ShellPreview>(shell),
         GenericPreview generic => Component<GenericPreviewView, FileSystemInfo>(generic.FileSystemInfo),
@@ -38,13 +38,13 @@ public sealed class DocumentPreview : Component<HtmlPreview>
         var (selected, setSelected) = UseState(0);
         var preview = Props.Html is null
             ? new BrowserPreviewProps(null, new Uri(Props.File.FullName), true)
-            : new BrowserPreviewProps(PreviewHtml.Document(Props.Html, Props.File.DirectoryName), null, false);
+            : new BrowserPreviewProps(PreviewHtml.Document(Props.Html), null, false, Props.File.DirectoryName);
         var source = new BrowserPreviewProps(
             PreviewHtml.Source(Props.Source, Props.Html is null ? "html" : null), null, false);
 
         return Grid(columns: [GridSize.Star()], rows: [GridSize.Auto, GridSize.Star()],
             SelectorBar([SelectorBarItem("Preview"), SelectorBarItem("Source")], selected, setSelected)
-                .AutomationName("Document view").Margin(8, 4).Grid(row: 0),
+                .AutomationName("Document view").HAlign(HorizontalAlignment.Center).Margin(8, 4).Grid(row: 0),
             Component<BrowserPreview, BrowserPreviewProps>(selected == 0 ? preview : source)
                 .WithKey(selected == 0 ? "preview" : "source").Grid(row: 1)
         );
@@ -75,8 +75,8 @@ public sealed class GenericPreviewView : Component<FileSystemInfo>
 {
     public override Element Render()
     {
-        var (width, _) = UseWindowSize();
-        var compact = width < 640;
+        var (width, height) = UseWindowSize();
+        var compact = width < 640 || height < 560;
         var thumbnail = UseMemo(() => new ShellThumbnailProvider().GetImage(Props), Props);
         var typeName = UseMemo(() =>
         {
@@ -95,29 +95,30 @@ public sealed class GenericPreviewView : Component<FileSystemInfo>
                 .FontFamily("Segoe Fluent Icons").FontSize(56).Foreground(Theme.SecondaryText)
                 .HAlign(HorizontalAlignment.Center).VAlign(VerticalAlignment.Center)
             : Component<BitmapPreview, byte[]>(thumbnail);
-        artwork = Border(artwork).Size(compact ? 96 : 144, compact ? 96 : 144);
+        artwork = Border(artwork).Size(compact ? 112 : 192, compact ? 112 : 192);
 
         var heading = VStack(8,
             Subtitle(Props.Name).TextWrapping(TextWrapping.Wrap)
-                .TextAlignment(compact ? TextAlignment.Center : TextAlignment.Left),
+                .TextAlignment(TextAlignment.Center),
             Body(typeName).Foreground(Theme.SecondaryText)
-                .TextAlignment(compact ? TextAlignment.Center : TextAlignment.Left)
+                .TextAlignment(TextAlignment.Center)
         );
-        Element summary = compact
-            ? VStack(16, artwork.HAlign(HorizontalAlignment.Center), heading)
-            : Grid(columns: [GridSize.Px(144), GridSize.Star()], rows: [GridSize.Auto],
-                artwork.Grid(column: 0),
-                heading.Margin(left: 24).VAlign(VerticalAlignment.Center).Grid(column: 1));
+        var summary = VStack(20, artwork.HAlign(HorizontalAlignment.Center), heading);
 
-        var properties = Border(VStack(16,
-            Property("Type", Caption(typeName)),
+        var properties = VStack(8,
             Property(Props is DirectoryInfo ? "Contents" : "Size", Component<FileDetails, FileSystemInfo>(Props)),
             Property("Modified", Caption(Props.LastWriteTime.ToString("g", CultureInfo.CurrentUICulture)))
-        )).Padding(16).CornerRadius(8).Background(Theme.CardBackground).WithBorder(Theme.CardStroke);
+        ).MaxWidth(320).HAlign(HorizontalAlignment.Center);
 
         return ScrollViewer(
-            VStack(24, summary, properties).MaxWidth(600).Margin(24)
-        ).Set(viewer => viewer.VerticalContentAlignment = VerticalAlignment.Center);
+            VStack(24, summary, properties).Width(Math.Max(0, Math.Min(width - (compact ? 48 : 64), 480)))
+                .HAlign(HorizontalAlignment.Center).Margin(compact ? 24 : 32)
+        ).Set(viewer =>
+        {
+            viewer.VerticalContentAlignment = VerticalAlignment.Center;
+            viewer.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+            viewer.HorizontalScrollBarVisibility = Microsoft.UI.Xaml.Controls.ScrollBarVisibility.Disabled;
+        });
     }
 
     private static Element Property(string label, Element value) =>

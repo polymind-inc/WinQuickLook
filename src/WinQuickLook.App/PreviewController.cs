@@ -46,7 +46,7 @@ public sealed class PreviewController(IEnumerable<IFileSystemPreviewHandler> pre
         var scale = Math.Min(Math.Min(workWidth, workHeight) * 0.8 / Math.Max(result.RequestSize.Width, result.RequestSize.Height), 1);
         var width = Math.Max(400, Math.Round(result.RequestSize.Width * scale));
         var height = Math.Max(400, Math.Round(result.RequestSize.Height * scale)
-            + AppParameters.CaptionHeight + AppParameters.FooterHeight + AppParameters.PreviewMargin);
+            + AppParameters.CaptionHeight + AppParameters.FooterHeight);
         var file = item as FileInfo;
         var defaultApp = file is not null && associations.TryGetDefault(file, out var entry) ? entry : null;
         var props = new PreviewWindowProps(Guid.NewGuid().ToString("N"), result.Content, defaultApp, associations, ClosePreview, OpenWithAssociation);

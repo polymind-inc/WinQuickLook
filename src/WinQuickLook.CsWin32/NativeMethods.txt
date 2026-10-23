@@ -35,6 +35,8 @@ SetWindowLong
 GetWindowLong
 GetWindowThreadProcessId
 GetGUIThreadInfo
+GetDC
+ReleaseDC
 GetClassName
 FindWindowEx
 GetAsyncKeyState
@@ -63,6 +65,12 @@ SHCreateStreamOnFileEx
 
 // shcore
 GetDpiForMonitor
+
+// gdi32
+GetObject
+BITMAP
+GetDIBits
+CreateDIBSection
 
 // mfplat
 MFStartup

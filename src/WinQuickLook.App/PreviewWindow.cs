@@ -69,13 +69,17 @@ public sealed class PreviewWindow : Component<PreviewWindowProps>
         Element? openButton = file is null ? null : Props.DefaultApp is { } defaultApp
             ? SplitButton("Open", () => Open(defaultApp), flyout)
                 .ToolTip("Open with " + defaultApp.Name)
-                .AutomationName("Open with " + defaultApp.Name)
-            : DropDownButton("Open with", flyout).AutomationName("Choose an application");
+                .AutomationName("Open with " + defaultApp.Name).Height(32)
+            : DropDownButton("Open with", flyout).Height(32).AutomationName("Choose an application");
 
-        var parentPath = item is DirectoryInfo directory ? directory.Parent?.FullName : file?.DirectoryName;
-        var titleBar = TitleBar(item.Name)
+        var titleBar = TitleBar("")
             .Icon(FontIcon(item is DirectoryInfo ? "\uE8B7" : "\uE8A5"))
-            .Subtitle(width >= 640 ? AppParameters.Title : "");
+            .Content(TextBlock(item.Name).FontSize(13).SemiBold()
+                .TextTrimming(TextTrimming.CharacterEllipsis).TextAlignment(TextAlignment.Center)
+                .MaxWidth(Math.Max(120, width - 240)).Margin(12, 0)
+                .HAlign(HorizontalAlignment.Center).ToolTip(item.FullName))
+            .RightHeader(openButton?.Margin(right: 8) ?? Empty())
+            .Height(AppParameters.CaptionHeight).AutomationName(item.Name);
 
         return Grid(columns: [GridSize.Star()], rows: [GridSize.Auto, GridSize.Star(), GridSize.Auto],
             titleBar.Grid(row: 0),
@@ -86,22 +90,14 @@ public sealed class PreviewWindow : Component<PreviewWindowProps>
                         .Severity(Microsoft.UI.Xaml.Controls.InfoBarSeverity.Error)
                         .Margin(16).VAlign(VerticalAlignment.Top)
                 )
-            ).CornerRadius(8).Background(Theme.LayerFill).WithBorder(Theme.CardStroke)
-                .Margin(left: 12, top: 4, right: 12).Grid(row: 1),
-            Grid(columns: [GridSize.Star(), GridSize.Auto], rows: [GridSize.Auto],
-                VStack(2,
-                    HStack(8,
-                        Caption(Describe(Props.Content)).Foreground(Theme.SecondaryText),
-                        Caption("·").Foreground(Theme.SecondaryText),
-                        Component<FileDetails, FileSystemInfo>(item)
-                    ),
-                    Caption(parentPath ?? item.FullName)
-                        .TextTrimming(TextTrimming.CharacterEllipsis)
-                        .Foreground(Theme.SecondaryText)
-                        .ToolTip(item.FullName)
-                ).VAlign(VerticalAlignment.Center).Margin(right: 16).Grid(column: 0),
-                openButton?.VAlign(VerticalAlignment.Center).Grid(column: 1)
-            ).Padding(16, 12).Grid(row: 2)
+            ).Background(Theme.LayerFill).WithBorder(Theme.CardStroke)
+                .BorderThickness(new Thickness(0, 1, 0, 1)).Grid(row: 1),
+            HStack(6,
+                Caption(Describe(Props.Content)).Foreground(Theme.SecondaryText),
+                Caption("·").Foreground(Theme.SecondaryText),
+                Component<FileDetails, FileSystemInfo>(item)
+            ).HAlign(HorizontalAlignment.Center).VAlign(VerticalAlignment.Center)
+                .Height(AppParameters.FooterHeight).ToolTip(item.FullName).Grid(row: 2)
         ).OnKeyDown((_, e) =>
         {
             if (e.Key == VirtualKey.Escape)

@@ -5,12 +5,13 @@ using Microsoft.UI.Reactor;
 using Microsoft.UI.Reactor.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Web.WebView2.Core;
 
 using static Microsoft.UI.Reactor.Factories;
 
 namespace WinQuickLook.App;
 
-public sealed record BrowserPreviewProps(string? Html, Uri? Source, bool AllowScripts);
+public sealed record BrowserPreviewProps(string? Html, Uri? Source, bool AllowScripts, string? AssetDirectory = null);
 
 public sealed class BrowserPreview : Component<BrowserPreviewProps>
 {
@@ -36,6 +37,11 @@ public sealed class BrowserPreview : Component<BrowserPreviewProps>
                     return;
                 }
                 webView.CoreWebView2.Settings.IsScriptEnabled = Props.AllowScripts;
+                if (Props.AssetDirectory is { } directory)
+                {
+                    webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+                        PreviewHtml.LocalContentHost, directory, CoreWebView2HostResourceAccessKind.DenyCors);
+                }
                 if (Props.Source is { } source)
                 {
                     webView.CoreWebView2.Navigate(source.AbsoluteUri);

@@ -25,8 +25,8 @@ public sealed class App(LowLevelKeyboardHook keyboardHook, ShellExplorerProvider
         _trayIcon = ReactorApp.OpenTrayIcon(new TrayIconSpec(
             WindowIcon.FromPath(Path.Combine(AppContext.BaseDirectory, "Icon.ico")), AppParameters.Title));
 
-        _trayIcon.RightClick += (_, _) => _trayIcon.ShowFlyout(MenuItems(
-            MenuItem("Exit", () => ReactorApp.Exit())));
+        _trayIcon.RightClick += (_, _) => _trayIcon.ShowFlyout(VStack(
+            Button("Exit", () => ReactorApp.Exit())).Padding(8));
         keyboardHook.PerformKeyDown = key =>
         {
             if (key == VIRTUAL_KEY.VK_SPACE)

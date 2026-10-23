@@ -19,8 +19,8 @@ public sealed class MediaPreviewView : Component<MediaPreview>
 {
     public override Element Render()
     {
-        var (width, _) = UseWindowSize();
-        var compact = width < 640;
+        var (width, height) = UseWindowSize();
+        var compact = width < 520 || height < 560;
         var element = UseRef<Microsoft.UI.Xaml.Controls.MediaPlayerElement?>(null);
         var source = UseMemo(() => MediaSource.CreateFromUri(new Uri(Props.File.FullName)), Props);
         var player = UseMemo(() => new MediaPlayer
@@ -52,27 +52,29 @@ public sealed class MediaPreviewView : Component<MediaPreview>
                 .HAlign(HorizontalAlignment.Center).VAlign(VerticalAlignment.Center))
                 .Background(Theme.SubtleFill).CornerRadius(8).WithBorder(Theme.CardStroke)
             : Component<BitmapPreview, byte[]>(thumbnail);
-        artwork = artwork.Size(compact ? 128 : 192, compact ? 128 : 192);
+        artwork = Border(artwork).CornerRadius(12).Size(compact ? 160 : 224, compact ? 160 : 224);
 
         var title = VStack(8,
-            Subtitle(metadata?.Title ?? Props.File.Name).TextWrapping(TextWrapping.Wrap)
-                .TextAlignment(compact ? TextAlignment.Center : TextAlignment.Left),
+            Body(metadata?.Title ?? Props.File.Name).FontSize(18).SemiBold()
+                .TextWrapping(TextWrapping.Wrap).TextAlignment(TextAlignment.Center),
             Body(metadata?.Artist ?? "Unknown artist").Foreground(Theme.SecondaryText)
-                .TextWrapping(TextWrapping.Wrap).TextAlignment(compact ? TextAlignment.Center : TextAlignment.Left),
+                .TextWrapping(TextWrapping.Wrap).TextAlignment(TextAlignment.Center),
             string.IsNullOrEmpty(metadata?.Album) ? null :
                 Caption(metadata.Album).Foreground(Theme.SecondaryText)
-                    .TextWrapping(TextWrapping.Wrap).TextAlignment(compact ? TextAlignment.Center : TextAlignment.Left)
+                    .TextWrapping(TextWrapping.Wrap).TextAlignment(TextAlignment.Center)
         );
-        Element audio = compact
-            ? VStack(16, artwork.HAlign(HorizontalAlignment.Center), title)
-            : Grid(columns: [GridSize.Px(192), GridSize.Star()], rows: [GridSize.Auto],
-                artwork.Grid(column: 0),
-                title.Margin(left: 24).VAlign(VerticalAlignment.Center).Grid(column: 1));
+        var audio = VStack(20, artwork.HAlign(HorizontalAlignment.Center), title)
+            .Width(Math.Max(0, Math.Min(width - 48, 480))).HAlign(HorizontalAlignment.Center);
 
         return Grid(columns: [GridSize.Star()], rows: [GridSize.Star(), GridSize.Auto],
             Props.IsVideo ? null : ScrollViewer(audio.Margin(24))
-                .Set(viewer => viewer.VerticalContentAlignment = VerticalAlignment.Center).Grid(row: 0),
-            Props.IsVideo ? media.Grid(row: 0, rowSpan: 2) : media.Height(80).Grid(row: 1),
+                .Set(viewer =>
+                {
+                    viewer.VerticalContentAlignment = VerticalAlignment.Center;
+                    viewer.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+                    viewer.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                }).Grid(row: 0),
+            Props.IsVideo ? media.Grid(row: 0, rowSpan: 2) : media.Height(64).Margin(16, 0, 16, 8).Grid(row: 1),
             error is null ? null : InfoBar("Cannot play media", error).Severity(InfoBarSeverity.Error)
                 .Margin(16).VAlign(VerticalAlignment.Top).Grid(row: 0)
         );
