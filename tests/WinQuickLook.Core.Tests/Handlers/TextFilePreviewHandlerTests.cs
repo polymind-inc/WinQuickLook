@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-using ICSharpCode.AvalonEdit;
+
 
 using WinQuickLook.Handlers;
 
@@ -12,7 +12,7 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class TextFilePreviewHandlerTests
 {
-    [WpfTheory]
+    [StaTheory]
     [InlineData(932)]
     [InlineData(65001)]
     [InlineData(1200)]
@@ -33,11 +33,11 @@ public class TextFilePreviewHandlerTests
             Assert.True(actual);
             Assert.NotNull(handlerResult);
 
-            var textEditor = Assert.IsType<TextEditor>(handlerResult.Content);
+            var textEditor = Assert.IsType<TextPreview>(handlerResult.Content);
 
             Assert.Equal(text, textEditor.Text);
             Assert.Equal(codePage, textEditor.Encoding.CodePage);
-            Assert.False(textEditor.IsModified);
+
 
             using var exclusiveStream = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         }

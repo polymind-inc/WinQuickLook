@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using System.Windows.Controls;
+
 
 using WinQuickLook.Handlers;
 
@@ -9,7 +9,7 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class FilePreviewHandlerTests
 {
-    [WpfFact]
+    [StaFact]
     public void TryCreateViewer_IgnoredExecutableExtension_ReturnsFalse()
     {
         var handler = new TestFilePreviewHandler(HandlerPriorityClass.Normal);
@@ -22,7 +22,7 @@ public class FilePreviewHandlerTests
         Assert.False(handler.WasCalled);
     }
 
-    [WpfFact]
+    [StaFact]
     public void TryCreateViewer_GenericHandlerWithIgnoredExtension_ReturnsTrue()
     {
         var handler = new TestFilePreviewHandler(HandlerPriorityClass.Generic);
@@ -35,7 +35,7 @@ public class FilePreviewHandlerTests
         Assert.True(handler.WasCalled);
     }
 
-    [WpfFact]
+    [StaFact]
     public void TryCreateViewer_DirectoryInput_ReturnsFalse()
     {
         var handler = new TestFilePreviewHandler(HandlerPriorityClass.Normal);
@@ -57,7 +57,7 @@ public class FilePreviewHandlerTests
         protected override bool TryCreateViewer(FileInfo fileInfo, out HandlerResult? handlerResult)
         {
             WasCalled = true;
-            handlerResult = new HandlerResult { Content = new Border() };
+            handlerResult = new HandlerResult { Content = new GenericPreview(fileInfo) };
 
             return true;
         }

@@ -1,64 +1,46 @@
 ﻿using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Media.Imaging;
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Shell;
 
-using WinQuickLook.Extensions;
+using WinQuickLook.Interop;
 
 namespace WinQuickLook.Providers;
 
 public class ShellThumbnailProvider
 {
-    public BitmapSource? GetImage(FileSystemInfo fileSystemInfo)
+    public byte[]? GetImage(FileSystemInfo fileSystemInfo)
     {
-        if (PInvoke.SHCreateItemFromParsingName(fileSystemInfo.FullName, null, out IShellItem? shellItem).Failed)
+        var hr = PInvoke.SHCreateItemFromParsingName(fileSystemInfo.FullName, null, out IShellItem? shellItem);
+        using var itemScope = new ComScope(shellItem);
+
+        if (hr.Failed || shellItem is not IShellItemImageFactory imageFactory)
         {
             return null;
         }
 
-        if (shellItem is null)
+        if (imageFactory.GetImage(new SIZE { cx = 256, cy = 256 }, SIIGBF.SIIGBF_BIGGERSIZEOK, out var bitmapHandle).Failed)
         {
             return null;
         }
 
-        // ReSharper disable once SuspiciousTypeConversion.Global
-        if (shellItem is not IShellItemImageFactory imageFactory)
+        using (bitmapHandle)
         {
-            Marshal.ReleaseComObject(shellItem);
-
-            return null;
-        }
-
-        var size = new SIZE { cx = 256, cy = 256 };
-
-        if (imageFactory.GetImage(size, SIIGBF.SIIGBF_BIGGERSIZEOK, out var bitmapHandle).Failed)
-        {
-            Marshal.ReleaseComObject(shellItem);
-
-            return null;
-        }
-
-        try
-        {
-            return Imaging.CreateBitmapSourceFromHBitmap(bitmapHandle.DangerousGetHandle(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
-                          .AsFreeze();
-        }
-        catch
-        {
-            // ignored
-            return null;
-        }
-        finally
-        {
-            bitmapHandle.Close();
-
-            Marshal.ReleaseComObject(shellItem);
+            try
+            {
+                using var bitmap = Image.FromHbitmap(bitmapHandle.DangerousGetHandle());
+                using var buffer = new MemoryStream();
+                bitmap.Save(buffer, ImageFormat.Png);
+                return buffer.ToArray();
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

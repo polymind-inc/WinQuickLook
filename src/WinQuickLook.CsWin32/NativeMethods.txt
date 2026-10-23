@@ -101,3 +101,12 @@ ShellWindowFindWindowOptions
 
 BHID_DataObject
 STGM
+
+// Native hook message loop
+GetCurrentThreadId
+PeekMessage
+GetMessage
+TranslateMessage
+DispatchMessage
+PostThreadMessage
+WM_QUIT

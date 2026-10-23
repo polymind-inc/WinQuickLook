@@ -1,16 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Interop;
-using System.Windows.Threading;
 
 using Moq;
 
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.System.Com;
 using Windows.Win32.UI.Shell;
 using Windows.Win32.UI.Shell.PropertiesSystem;
+using Windows.Win32.UI.WindowsAndMessaging;
 
 using WinQuickLook.Controls;
 
@@ -20,40 +18,31 @@ namespace WinQuickLook.Tests.Controls;
 
 public class ShellFileControlTests
 {
-    [WpfFact]
-    public void Unloaded_ReleasesHandlerAndFileHandleImmediately()
+    [StaFact]
+    public void Dispose_ReleasesNativeWindowHandlerAndFileHandleImmediately()
     {
         var path = Path.GetTempFileName();
-        using var control = new ShellFileControl();
+        var parent = PInvoke.CreateWindowEx2(0, "static", "Shell lifetime test", WINDOW_STYLE.WS_POPUP,
+            0, 0, 10, 10, default, null, null);
+        using var control = new ShellFileControl(parent);
         var handler = CreateStreamHandler();
-        var panel = new Grid();
-        panel.Children.Add(control);
-
         try
         {
-            using var source = new HwndSource(new HwndSourceParameters("Shell lifetime test") { Width = 10, Height = 10, WindowStyle = 0 });
-            source.RootVisual = panel;
-            panel.Measure(new Size(10, 10));
-            panel.Arrange(new Rect(0, 0, 10, 10));
-            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-
+            control.Resize(0, 0, 10, 10);
             Assert.NotEqual(nint.Zero, control.Handle);
             Assert.True(control.Open(new FileInfo(path), handler));
-
-            panel.Children.Clear();
-            Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
-
+            control.Dispose();
             Assert.Equal(1, handler.UnloadCount);
-
             using var exclusive = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         }
         finally
         {
+            PInvoke.DestroyWindow(parent);
             File.Delete(path);
         }
     }
 
-    [WpfFact]
+    [StaFact]
     public void Open_ReplacementAndDispose_ReleaseEachHandlerOnce()
     {
         var path = Path.GetTempFileName();
@@ -82,7 +71,7 @@ public class ShellFileControlTests
         }
     }
 
-    [WpfFact]
+    [StaFact]
     public void Open_PreviewFailure_ReleasesHandlerAndStream()
     {
         var path = Path.GetTempFileName();

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+﻿using Windows.Foundation;
 
 using WinQuickLook.Extensions;
 
