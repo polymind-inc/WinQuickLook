@@ -1,9 +1,9 @@
 ﻿using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Media;
 
-using ICSharpCode.AvalonEdit;
+
+
 
 using Windows.Win32;
 using Windows.Win32.Globalization;
@@ -65,21 +65,8 @@ public class TextFilePreviewHandler : FilePreviewHandler
         using var fileStream = fileInfo.OpenReadNoLock();
         using var reader = new StreamReader(fileStream, encoding, detectEncodingFromByteOrderMarks: true);
 
-        var textEditor = new TextEditor();
-
-        using (textEditor.Initialize())
-        {
-            textEditor.FontFamily = new FontFamily("Consolas");
-            textEditor.FontSize = 14;
-            textEditor.IsReadOnly = true;
-            textEditor.ShowLineNumbers = true;
-
-            textEditor.Text = reader.ReadToEnd();
-            textEditor.Encoding = reader.CurrentEncoding;
-            textEditor.IsModified = false;
-        }
-
-        handlerResult = new HandlerResult { Content = textEditor };
+        var text = reader.ReadToEnd();
+        handlerResult = new HandlerResult { Content = new TextPreview(fileInfo, text, reader.CurrentEncoding) };
 
         return true;
     }

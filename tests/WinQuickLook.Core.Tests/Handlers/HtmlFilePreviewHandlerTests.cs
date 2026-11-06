@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-using WinQuickLook.Controls;
+
 using WinQuickLook.Handlers;
 
 using Xunit;
@@ -9,7 +9,7 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class HtmlFilePreviewHandlerTests
 {
-    [WpfTheory]
+    [StaTheory]
     [InlineData("test.htm", true)]
     [InlineData("test.html", true)]
     [InlineData("test.xhtml", true)]
@@ -30,8 +30,8 @@ public class HtmlFilePreviewHandlerTests
         Assert.Equal(expected, actual);
     }
 
-    [WpfFact]
-    public void TryCreateViewer_SupportedHtmlFile_ReturnsHtmlFileControl()
+    [StaFact]
+    public void TryCreateViewer_SupportedHtmlFile_ReturnsHtmlPreview()
     {
         var fileInfo = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), "SampleFiles", "test.html"));
 
@@ -41,10 +41,10 @@ public class HtmlFilePreviewHandlerTests
 
         Assert.True(actual);
         Assert.NotNull(handlerResult);
-        Assert.IsType<HtmlFileControl>(handlerResult.Content);
+        Assert.IsType<HtmlPreview>(handlerResult.Content);
     }
 
-    [WpfFact]
+    [StaFact]
     public void TryCreateViewer_IgnoredExecutableExtension_ReturnsFalse()
     {
         var fileInfo = new FileInfo(Path.Combine(Path.GetTempPath(), "test.exe"));

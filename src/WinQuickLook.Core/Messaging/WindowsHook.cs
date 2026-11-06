@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Threading;
+
 
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -18,7 +18,7 @@ public abstract class WindowsHook(WINDOWS_HOOK_ID idHook) : IDisposable
     private HookThread? _worker;
     private bool _disposed;
 
-    internal Dispatcher? HookDispatcher
+    internal HookDispatcher? HookDispatcher
     {
         get
         {
@@ -131,13 +131,13 @@ public abstract class WindowsHook(WINDOWS_HOOK_ID idHook) : IDisposable
         private readonly WINDOWS_HOOK_ID _idHook;
         private readonly HOOKPROC _callback;
         private readonly Thread _thread;
-        private readonly TaskCompletionSource<Dispatcher> _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<HookDispatcher> _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public bool IsAlive => _thread.IsAlive;
 
         public void Start() => _thread.Start();
 
-        public Dispatcher WaitForStart() => _started.Task.GetAwaiter().GetResult();
+        public HookDispatcher WaitForStart() => _started.Task.GetAwaiter().GetResult();
 
         public void Stop()
         {
@@ -145,10 +145,7 @@ public abstract class WindowsHook(WINDOWS_HOOK_ID idHook) : IDisposable
             {
                 var dispatcher = WaitForStart();
 
-                if (!dispatcher.HasShutdownStarted)
-                {
-                    dispatcher.BeginInvokeShutdown(DispatcherPriority.Send);
-                }
+                dispatcher.Shutdown();
             }
             catch (Exception) when (_started.Task.IsFaulted)
             {
@@ -175,10 +172,10 @@ public abstract class WindowsHook(WINDOWS_HOOK_ID idHook) : IDisposable
                     throw new Win32Exception(Marshal.GetLastPInvokeError());
                 }
 
-                var dispatcher = Dispatcher.CurrentDispatcher;
+                var dispatcher = new HookDispatcher();
 
                 _started.SetResult(dispatcher);
-                Dispatcher.Run();
+                dispatcher.Run();
             }
             catch (Exception exception)
             {

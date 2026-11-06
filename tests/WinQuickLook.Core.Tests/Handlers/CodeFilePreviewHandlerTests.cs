@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-using ICSharpCode.AvalonEdit;
+
 
 using WinQuickLook.Handlers;
 
@@ -11,7 +11,7 @@ namespace WinQuickLook.Tests.Handlers;
 
 public class CodeFilePreviewHandlerTests
 {
-    [WpfTheory]
+    [StaTheory]
     [InlineData("test.cs")]
     [InlineData("test.ts")]
     [InlineData("test.tsx")]
@@ -29,7 +29,7 @@ public class CodeFilePreviewHandlerTests
         Assert.True(actual);
     }
 
-    [WpfTheory]
+    [StaTheory]
     [InlineData("test.txt")]
     [InlineData("test")]
     public void TryCreateViewer_UnsupportedCodeExtension_ReturnsFalse(string fileName)
@@ -44,8 +44,8 @@ public class CodeFilePreviewHandlerTests
         Assert.Null(handlerResult);
     }
 
-    [WpfFact]
-    public void TryCreateViewer_SupportedCodeFile_ReturnsTextEditorWithSyntaxHighlighting()
+    [StaFact]
+    public void TryCreateViewer_SupportedCodeFile_ReturnsTextWithLanguage()
     {
         using var temporaryFile = TemporaryFile.Create("test.ts", "const value = 1;");
 
@@ -56,8 +56,8 @@ public class CodeFilePreviewHandlerTests
         Assert.True(actual);
         Assert.NotNull(handlerResult);
 
-        var textEditor = Assert.IsType<TextEditor>(handlerResult.Content);
-        Assert.NotNull(textEditor.SyntaxHighlighting);
+        var textEditor = Assert.IsType<TextPreview>(handlerResult.Content);
+        Assert.Equal("typescript", textEditor.Language);
     }
 
     private sealed class TemporaryFile : IDisposable

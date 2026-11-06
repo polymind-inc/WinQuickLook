@@ -21,13 +21,13 @@ public class WindowsHookTests
 
         hook.Start();
 
-        var dispatcher = Assert.IsType<System.Windows.Threading.Dispatcher>(hook.HookDispatcher);
+        var dispatcher = Assert.IsType<HookDispatcher>(hook.HookDispatcher);
 
         Assert.NotEqual(Thread.CurrentThread.ManagedThreadId, dispatcher.Thread.ManagedThreadId);
 
         var operation = dispatcher.InvokeAsync(() => Thread.CurrentThread.ManagedThreadId);
 
-        var threadId = await operation.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        var threadId = await operation.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Assert.Equal(dispatcher.Thread.ManagedThreadId, threadId);
 

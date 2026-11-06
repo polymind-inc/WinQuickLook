@@ -81,8 +81,37 @@ That's it! WinQuickLook will run in the background, ready whenever you need it.
 
 ## 🖥️ System Requirements
 
-- Windows 10 Version 1903 or later
-- Windows 11
+The Reactor implementation requires Windows 11 version 22H2 or later (x64 or ARM64).
+
+## Development
+
+The application uses [Microsoft.UI.Reactor](https://github.com/microsoft/microsoft-ui-reactor)
+`0.1.0-preview.16` and WinUI 3. Reactor is currently a preview API. The UI is declared
+in C# components; Core contains preview data and Windows integration without WPF.
+
+Install the .NET 10 SDK and Windows SDK 10.0.26100, then build and test:
+
+```powershell
+dotnet build WinQuickLook.slnx -c Release -p:Platform=x64
+dotnet test WinQuickLook.slnx -c Release -p:Platform=x64 --no-build
+dotnet run --project src/WinQuickLook.App -p:Platform=x64
+```
+
+The app starts in the notification area. Select a file in Explorer and press Space;
+click the preview to activate it, then press Escape or close the window to hide it.
+Use the notification icon's Exit command to quit. To preview a file directly:
+
+```powershell
+dotnet run --project src/WinQuickLook.App -p:Platform=x64 -- README.md
+```
+
+Replace `x64` with `arm64` when building for ARM64. Builds include the Windows App
+Runtime and run unpackaged, without Developer Mode. Publishing the executable and
+its dependencies is supported with:
+
+```powershell
+dotnet publish src/WinQuickLook.App -c Release -p:Platform=x64
+```
 
 ## 🤝 Contributing
 

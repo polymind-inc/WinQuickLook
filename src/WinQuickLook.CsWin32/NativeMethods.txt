@@ -35,12 +35,16 @@ SetWindowLong
 GetWindowLong
 GetWindowThreadProcessId
 GetGUIThreadInfo
+GetDC
+ReleaseDC
 GetClassName
 FindWindowEx
 GetAsyncKeyState
 MonitorFromWindow
 GetMonitorInfo
 SetWindowPos
+HWND_TOPMOST
+HWND_NOTOPMOST
 
 // shell32
 SHCreateItemFromParsingName
@@ -62,8 +66,15 @@ SHCreateStreamOnFileEx
 // shcore
 GetDpiForMonitor
 
+// gdi32
+GetObject
+BITMAP
+GetDIBits
+CreateDIBSection
+
 // mfplat
 MFStartup
+MFCreateAttributes
 MFShutdown
 MFCreateSourceReaderFromURL
 
@@ -83,6 +94,7 @@ WM_SYSKEYDOWN
 WM_NCRBUTTONUP
 MF_MT_FRAME_SIZE
 MF_MT_AUDIO_NUM_CHANNELS
+MF_MT_VIDEO_ROTATION
 
 WINDOW_STYLE
 SET_WINDOW_POS_FLAGS
@@ -101,3 +113,12 @@ ShellWindowFindWindowOptions
 
 BHID_DataObject
 STGM
+
+// Native hook message loop
+GetCurrentThreadId
+PeekMessage
+GetMessage
+TranslateMessage
+DispatchMessage
+PostThreadMessage
+WM_QUIT

@@ -1,12 +1,13 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Windows;
+
+using Windows.Foundation;
 
 using Windows.Win32;
 using Windows.Win32.Media.MediaFoundation;
 
-using WinQuickLook.Controls;
+
 using WinQuickLook.Extensions;
 
 namespace WinQuickLook.Handlers;
@@ -69,16 +70,7 @@ public class MediaFilePreviewHandler : FilePreviewHandler
             return false;
         }
 
-        var requestSize = videoSize.FitTo(1200);
-
-        var videoFileControl = new VideoFileControl();
-
-        using (videoFileControl.Initialize())
-        {
-            videoFileControl.Open(fileInfo);
-        }
-
-        handlerResult = new HandlerResult { Content = videoFileControl, RequestSize = requestSize };
+        handlerResult = new HandlerResult { Content = new MediaPreview(fileInfo, true, videoSize), RequestSize = videoSize };
 
         return true;
     }
@@ -92,30 +84,23 @@ public class MediaFilePreviewHandler : FilePreviewHandler
             return false;
         }
 
-        var musicFileControl = new AudioFileControl();
-
-        var requestSize = new Size(700, 400);
-
-        using (musicFileControl.Initialize())
-        {
-            musicFileControl.Open(fileInfo);
-        }
-
-        handlerResult = new HandlerResult { Content = musicFileControl, RequestSize = requestSize };
+        handlerResult = new HandlerResult { Content = new MediaPreview(fileInfo, false), RequestSize = new Size(700, 400) };
 
         return true;
     }
 
-    private static bool TryGetVideoSize(IMFAttributes videoMediaType, out Size size)
+    internal static bool TryGetVideoSize(IMFAttributes videoMediaType, out Size size)
     {
-        if (PInvoke.MFGetAttributeSize(videoMediaType, PInvoke.MF_MT_FRAME_SIZE, out var width, out var height).Failed)
+        if (PInvoke.MFGetAttributeSize(videoMediaType, PInvoke.MF_MT_FRAME_SIZE, out var width, out var height).Failed || width == 0 || height == 0)
         {
             size = default;
 
             return false;
         }
 
-        size = new Size(width, height);
+        size = videoMediaType.GetUINT32(PInvoke.MF_MT_VIDEO_ROTATION, out var rotation).Succeeded && rotation is 90 or 270
+            ? new Size(height, width)
+            : new Size(width, height);
 
         return true;
     }

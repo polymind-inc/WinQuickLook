@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-using WinQuickLook.Controls;
 using WinQuickLook.Extensions;
 
 namespace WinQuickLook.Handlers;
@@ -16,22 +14,15 @@ public class HtmlFilePreviewHandler : FilePreviewHandler
     {
         if (!s_supportedExtensions.Contains(fileInfo.Extension, StringComparer.OrdinalIgnoreCase))
         {
-            handlerResult = default;
-
+            handlerResult = null;
             return false;
         }
 
-        var htmlFileControl = new HtmlFileControl();
-
-        using (htmlFileControl.Initialize())
-        {
-            htmlFileControl.Open(fileInfo);
-        }
-
-        handlerResult = new HandlerResult { Content = htmlFileControl };
-
+        using var stream = fileInfo.OpenReadNoLock();
+        using var reader = new StreamReader(stream);
+        handlerResult = new HandlerResult { Content = new HtmlPreview(fileInfo, reader.ReadToEnd()) };
         return true;
     }
 
-    private static readonly IReadOnlyList<string> s_supportedExtensions = [".htm", ".html", ".xhtml"];
+    private static readonly string[] s_supportedExtensions = [".htm", ".html", ".xhtml"];
 }
